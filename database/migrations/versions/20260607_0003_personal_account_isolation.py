@@ -20,15 +20,24 @@ def upgrade() -> None:
         """
         ALTER TABLE identity.tenants
             ADD COLUMN IF NOT EXISTS identity_scope_key text,
-            ADD COLUMN IF NOT EXISTS account_type text NOT NULL DEFAULT 'organization';
-
+            ADD COLUMN IF NOT EXISTS account_type text NOT NULL DEFAULT 'organization'
+        """
+    )
+    op.execute(
+        """
         UPDATE identity.tenants
         SET identity_scope_key = 'tenant:' || entra_tenant_id::text
-        WHERE identity_scope_key IS NULL;
-
+        WHERE identity_scope_key IS NULL
+        """
+    )
+    op.execute(
+        """
         ALTER TABLE identity.tenants
-            ALTER COLUMN identity_scope_key SET NOT NULL;
-
+            ALTER COLUMN identity_scope_key SET NOT NULL
+        """
+    )
+    op.execute(
+        """
         DO $$
         BEGIN
             IF NOT EXISTS (
@@ -52,24 +61,39 @@ def upgrade() -> None:
                     CHECK (account_type IN ('organization', 'personal'));
             END IF;
         END
-        $$;
-
+        $$
+        """
+    )
+    op.execute(
+        """
         ALTER TABLE identity.tenants
-            DROP CONSTRAINT IF EXISTS tenants_entra_tenant_id_key;
-
+            DROP CONSTRAINT IF EXISTS tenants_entra_tenant_id_key
+        """
+    )
+    op.execute(
+        """
         CREATE INDEX IF NOT EXISTS ix_tenants_entra_tenant_id
-            ON identity.tenants (entra_tenant_id);
-
+            ON identity.tenants (entra_tenant_id)
+        """
+    )
+    op.execute(
+        """
         ALTER TABLE identity.oauth_connections
-            ADD COLUMN IF NOT EXISTS token_authority text;
-
+            ADD COLUMN IF NOT EXISTS token_authority text
+        """
+    )
+    op.execute(
+        """
         UPDATE identity.oauth_connections AS connection
         SET token_authority = tenant.entra_tenant_id::text
         FROM identity.tenants AS tenant
-        WHERE tenant.id = connection.tenant_id;
-
+        WHERE tenant.id = connection.tenant_id
+        """
+    )
+    op.execute(
+        """
         ALTER TABLE identity.oauth_connections
-            ALTER COLUMN token_authority SET NOT NULL;
+            ALTER COLUMN token_authority SET NOT NULL
         """
     )
 
@@ -78,15 +102,21 @@ def downgrade() -> None:
     op.execute(
         """
         ALTER TABLE identity.oauth_connections
-            DROP COLUMN token_authority;
-
+            DROP COLUMN token_authority
+        """
+    )
+    op.execute(
+        """
         DROP INDEX IF EXISTS identity.ix_tenants_entra_tenant_id;
-
+        """
+    )
+    op.execute(
+        """
         ALTER TABLE identity.tenants
             DROP CONSTRAINT tenants_account_type,
             DROP CONSTRAINT ux_tenants_identity_scope_key,
             DROP COLUMN account_type,
             DROP COLUMN identity_scope_key,
-            ADD CONSTRAINT tenants_entra_tenant_id_key UNIQUE (entra_tenant_id);
+            ADD CONSTRAINT tenants_entra_tenant_id_key UNIQUE (entra_tenant_id)
         """
     )

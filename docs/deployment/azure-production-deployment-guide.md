@@ -234,6 +234,22 @@ Create the database:
 4. Database name: `sentinel`.
 5. Select `Save`.
 
+Allow the UUID extension required by Sentinel:
+
+1. Open the PostgreSQL server.
+2. Go to `Server parameters`.
+3. Search for `azure.extensions`.
+4. Add/select `PGCRYPTO`.
+5. Save the parameter change.
+6. If Azure asks to restart the server, allow the restart.
+
+Sentinel uses PostgreSQL `gen_random_uuid()` defaults, which come from `pgcrypto`.
+Without this allow-list setting, migration fails with:
+
+```text
+extension "pgcrypto" is not allow-listed for users in Azure Database for PostgreSQL
+```
+
 Connection string format:
 
 ```text
@@ -700,10 +716,13 @@ Do not create these unless you decide to harden the deployment later:
 For a simple test environment, deleting `rg-sentinel` removes all Azure resources from
 this guide.
 
-## Demo Extension: Deploy Only Auth Plus Inventory
+## Previous Demo Extension: Auth Plus Inventory
 
-Use this extension if you only want a quick demo now and do not want every
-microservice running.
+This older extension keeps Inventory in the demo. For the current auth-only test, skip
+this section and use `Minimal Demo Steps From Step 9 Onward` below.
+
+Use this section only if you want a quick demo with auth plus Inventory and do not want
+every microservice running.
 
 This keeps the full platform files in the repository, but runs only:
 
@@ -933,26 +952,19 @@ federated credentials, and scale the remaining Deployments back to `1`.
 
 ## Minimal Demo Steps From Step 9 Onward
 
-Use this section instead of the full Step 9 onward flow when you only want the demo
-version running.
+Use this section instead of the full Step 9 onward flow when you only want to test the
+application deployment with authentication only.
 
 This demo deploys only:
 
 ```text
 web
 identity-service
-inventory-service
 sentinel-gateway
 ```
 
-Optional:
-
-```text
-inventory-worker
-```
-
-Do not deploy Relationship, Change Intelligence, Operations, Audit, or Outbox Relay for
-this minimal demo.
+Do not deploy Inventory, Relationship, Change Intelligence, Operations, Audit,
+Inventory Worker, or Outbox Relay for this minimal demo.
 
 ### Minimal Step 9: Add Federated Credentials
 
@@ -961,22 +973,17 @@ Create federated credentials only for:
 ```text
 sentinel-app/web
 sentinel-app/identity-service
-sentinel-app/inventory-service
-```
-
-If you want inventory refresh/discovery worker running, also create:
-
-```text
-sentinel-workers/inventory-worker
 ```
 
 Skip these for now:
 
 ```text
+sentinel-app/inventory-service
 sentinel-app/relationship-service
 sentinel-app/change-intelligence-service
 sentinel-app/operations-service
 sentinel-app/audit-service
+sentinel-workers/inventory-worker
 sentinel-workers/outbox-relay
 ```
 
@@ -1017,7 +1024,6 @@ TAG="v1"
 PUBLIC_IP="REPLACE_ME_SENTINEL_PUBLIC_IP"
 
 docker build -t $DOCKERHUB/sentinel-identity-service:$TAG -f apps/identity-service/Dockerfile .
-docker build -t $DOCKERHUB/sentinel-inventory-service:$TAG -f apps/inventory-service/Dockerfile .
 docker build -t $DOCKERHUB/sentinel-migration:$TAG -f apps/migration/Dockerfile .
 docker build \
   --build-arg NEXT_PUBLIC_API_BASE_URL=http://$PUBLIC_IP/api/v1 \
@@ -1025,14 +1031,13 @@ docker build \
   -f apps/web/Dockerfile .
 
 docker push $DOCKERHUB/sentinel-identity-service:$TAG
-docker push $DOCKERHUB/sentinel-inventory-service:$TAG
 docker push $DOCKERHUB/sentinel-migration:$TAG
 docker push $DOCKERHUB/sentinel-web:$TAG
 ```
 
 If the AKS public IP is not known yet, use this order:
 
-1. Build and push `identity-service`, `inventory-service`, and `migration`.
+1. Build and push `identity-service` and `migration`.
 2. Deploy the gateway once.
 3. Get the public IP.
 4. Rebuild and push only `sentinel-web` with the real public IP.
@@ -1063,35 +1068,18 @@ deploy/kubernetes/03-secret-provider-classes.yaml
 deploy/kubernetes/04-resource-governance.yaml
 deploy/kubernetes/10-web.yaml
 deploy/kubernetes/11-identity-service.yaml
-deploy/kubernetes/12-inventory-service.yaml
 deploy/kubernetes/40-network-policies.yaml
 deploy/kubernetes/50-gateway-loadbalancer.yaml
-```
-
-Only if you are running `inventory-worker`, also replace placeholders in:
-
-```text
-deploy/kubernetes/20-workers.yaml
 ```
 
 Required Key Vault secrets for the minimal demo:
 
 ```text
-identity-database-url
+postgres-runtime-url
 identity-microsoft-client-secret
-identity-session-secret
+identity-session-signing-key
 identity-token-encryption-key
-inventory-database-url
-internal-service-token
-```
-
-For the minimal demo, you do not need these yet:
-
-```text
-relationship-database-url
-intelligence-database-url
-operations-database-url
-audit-database-url
+internal-api-token
 ```
 
 ### Minimal Step 14: Deploy To AKS
@@ -1111,14 +1099,6 @@ Apply only the minimal demo services:
 ```powershell
 kubectl apply -f deploy/kubernetes/10-web.yaml
 kubectl apply -f deploy/kubernetes/11-identity-service.yaml
-kubectl apply -f deploy/kubernetes/12-inventory-service.yaml
-```
-
-If you want the inventory worker:
-
-```powershell
-kubectl apply -f deploy/kubernetes/20-workers.yaml
-kubectl scale deployment/outbox-relay -n sentinel-workers --replicas=0
 ```
 
 Apply networking:
@@ -1133,9 +1113,14 @@ The current gateway config contains routes for all Sentinel APIs. If you do not 
 the other API Services, Nginx may fail when it starts because those DNS names do not
 exist.
 
-For the minimal demo, create placeholder Kubernetes Services for the skipped APIs:
+For the auth-only demo, create placeholder Kubernetes Services for all skipped APIs:
 
 ```powershell
+kubectl create service clusterip inventory-service `
+  --tcp=80:8000 `
+  -n sentinel-app `
+  --dry-run=client -o yaml | kubectl apply -f -
+
 kubectl create service clusterip relationship-service `
   --tcp=80:8000 `
   -n sentinel-app `
@@ -1222,14 +1207,7 @@ Expected running app pods:
 ```text
 web
 identity-service
-inventory-service
 sentinel-gateway
-```
-
-If you deployed the worker, also expect:
-
-```text
-inventory-worker
 ```
 
 Open:
@@ -1242,7 +1220,6 @@ Health checks:
 
 ```text
 http://<AKS_PUBLIC_IP>/api/v1/auth/health/live
-http://<AKS_PUBLIC_IP>/api/v1/inventory/health/live
 ```
 
 When you want the full platform later, build the remaining service images, create the

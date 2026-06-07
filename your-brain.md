@@ -451,11 +451,22 @@ Nginx gateway through a `LoadBalancer`, `deploy/kubernetes/01-config.yaml` uses
 host-only cookies and `SENTINEL_SESSION_COOKIE_SECURE=false`, and the web image must
 be rebuilt with `NEXT_PUBLIC_API_BASE_URL=http://<AKS_PUBLIC_IP>/api/v1`.
 
-On 2026-06-08 a demo-only extension was appended to the deployment guide. It keeps the
-full manifest set but documents how to run only web, Identity, Inventory, optional
-Inventory worker, and the gateway. The omitted API Deployments are applied only to
-create their Service objects for gateway DNS and then scaled to zero. This is a demo
-shortcut, not a redesign of service boundaries.
+On 2026-06-08 a demo-only extension was appended to the deployment guide. The newest
+minimal demo path runs only web, Identity, and the gateway. Inventory, Relationship,
+Change Intelligence, Operations, Audit, Inventory Worker, and Outbox Relay are skipped.
+The gateway still needs DNS names for skipped APIs, so the guide creates placeholder
+ClusterIP Services without running those Deployments. This is a demo shortcut, not a
+redesign of service boundaries.
+
+On 2026-06-08 the Docker VM `RG-1/docker-vm` was reached through Azure Run Command
+because direct SSH to `20.244.8.208` timed out. Auth-demo images were built on the VM:
+`elzabeth03/sentinel-identity-service:v1.0.1`,
+`elzabeth03/sentinel-web:v1.0.1`, and migration image
+`elzabeth03/sentinel-migration:v1.0.2`. The web image was built with placeholder
+`NEXT_PUBLIC_API_BASE_URL=http://REPLACE_ME_AKS_PUBLIC_IP/api/v1` and must be rebuilt
+after the real AKS LoadBalancer IP is known. Azure PostgreSQL `RG-1/elz-db` had
+`azure.extensions=pgcrypto` enabled. Migration against database `mydb` completed
+successfully through revisions `20260606_0001`, `20260607_0002`, and `20260607_0003`.
 
 ## API and Event Standards
 
