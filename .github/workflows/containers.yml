@@ -1,0 +1,46 @@
+name: Containers
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - service: web
+            image: sentinel-web
+          - service: identity-service
+            image: sentinel-identity-service
+          - service: inventory-service
+            image: sentinel-inventory-service
+          - service: relationship-service
+            image: sentinel-relationship-service
+          - service: change-intelligence-service
+            image: sentinel-change-intelligence-service
+          - service: operations-service
+            image: sentinel-operations-service
+          - service: audit-service
+            image: sentinel-audit-service
+          - service: migration
+            image: sentinel-migration
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/${{ matrix.service }}/Dockerfile
+          push: false
+          tags: local/${{ matrix.image }}:${{ github.sha }}
+          build-args: |
+            NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1/api/v1
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

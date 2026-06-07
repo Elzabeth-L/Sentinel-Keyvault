@@ -1,0 +1,23 @@
+sequenceDiagram
+    actor User
+    participant Web
+    participant Intelligence
+    participant Relationship
+    participant Operations
+    participant Azure
+    participant Audit
+
+    User->>Web: Define change
+    Web->>Intelligence: Create assessment
+    Intelligence->>Relationship: Request bounded impact graph
+    Relationship-->>Intelligence: Versioned graph snapshot
+    Intelligence-->>Web: Risk, findings, input hash
+    User->>Operations: Create operation from assessment
+    Operations-->>Web: Approval required
+    User->>Operations: Approve immutable input hash
+    User->>Operations: Execute
+    Operations->>Azure: Typed allow-listed operation
+    Azure-->>Operations: Provider result/request IDs
+    Operations-->>Audit: Domain events via Service Bus
+    Operations-->>Web: Verified final state
+

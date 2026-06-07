@@ -1,0 +1,69 @@
+[build-system]
+requires = ["hatchling>=1.26"]
+build-backend = "hatchling.build"
+
+[project]
+name = "sentinel-platform"
+version = "0.1.0"
+description = "Sentinel Azure Change Intelligence Platform backend"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+  "alembic>=1.14,<2",
+  "asyncpg>=0.30,<1",
+  "azure-identity>=1.19,<2",
+  "azure-keyvault-secrets>=4.9,<5",
+  "azure-mgmt-resource>=23.2,<24",
+  "azure-mgmt-resourcegraph>=8.0,<9",
+  "cryptography>=43,<49",
+  "fastapi>=0.115,<1",
+  "httpx>=0.28,<1",
+  "pydantic>=2.10,<3",
+  "pydantic-settings>=2.7,<3",
+  "PyJWT[crypto]>=2.10,<3",
+  "python-json-logger>=3.2,<4",
+  "sqlalchemy[asyncio]>=2.0.36,<3",
+  "uvicorn[standard]>=0.34,<1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "mypy>=1.14,<2",
+  "pytest>=8.3,<9",
+  "pytest-asyncio>=0.25,<1",
+  "pytest-cov>=6,<7",
+  "respx>=0.22,<1",
+  "ruff>=0.9,<1",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["packages/python/sentinel_common"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests", "apps"]
+pythonpath = [
+  ".",
+  "packages/python",
+  "apps/identity-service/src",
+  "apps/inventory-service/src",
+  "apps/relationship-service/src",
+  "apps/change-intelligence-service/src",
+  "apps/operations-service/src",
+  "apps/audit-service/src",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["apps", "packages/python", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "ASYNC", "S"]
+ignore = ["S101", "B008"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+packages = ["sentinel_common"]
+mypy_path = "packages/python"

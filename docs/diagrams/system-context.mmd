@@ -1,0 +1,17 @@
+flowchart LR
+    Operator[Cloud Operator]
+    Admin[Customer Entra/Azure Admin]
+    Sentinel[Sentinel Control Plane]
+    Entra[Microsoft Entra ID]
+    Azure[Customer Azure Management Plane]
+    K8s[Customer AKS API]
+    Monitor[Azure Monitor]
+
+    Operator --> Sentinel
+    Admin --> Entra
+    Admin --> Azure
+    Sentinel --> Entra
+    Sentinel --> Azure
+    Sentinel --> K8s
+    Sentinel --> Monitor
+

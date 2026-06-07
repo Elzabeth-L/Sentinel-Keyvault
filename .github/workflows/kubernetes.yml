@@ -1,0 +1,93 @@
+name: Kubernetes Manifests
+
+on:
+  push:
+    paths:
+      - "deploy/kubernetes/**"
+      - "apps/migration/**"
+      - ".github/workflows/kubernetes.yml"
+  pull_request:
+    paths:
+      - "deploy/kubernetes/**"
+      - "apps/migration/**"
+      - ".github/workflows/kubernetes.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "PyYAML>=6,<7"
+      - name: Parse manifests and validate references
+        run: |
+          python - <<'PY'
+          import pathlib
+          import yaml
+
+          resources = []
+          for path in sorted(pathlib.Path("deploy/kubernetes").glob("*.yaml")):
+              for document in yaml.safe_load_all(path.read_text(encoding="utf-8")):
+                  if document:
+                      document["_file"] = str(path)
+                      resources.append(document)
+
+          index = {
+              (
+                  resource["kind"],
+                  resource.get("metadata", {}).get("namespace", "default"),
+                  resource["metadata"]["name"],
+              ): resource
+              for resource in resources
+          }
+          errors = []
+          for resource in resources:
+              if resource["kind"] not in {"Deployment", "Job"}:
+                  continue
+              namespace = resource["metadata"].get("namespace", "default")
+              pod_spec = resource["spec"]["template"]["spec"]
+              service_account = pod_spec.get("serviceAccountName")
+              if service_account and (
+                  "ServiceAccount",
+                  namespace,
+                  service_account,
+              ) not in index:
+                  errors.append(
+                      f"{resource['_file']}: missing ServiceAccount "
+                      f"{namespace}/{service_account}"
+                  )
+              for volume in pod_spec.get("volumes", []):
+                  provider = (
+                      volume.get("csi", {})
+                      .get("volumeAttributes", {})
+                      .get("secretProviderClass")
+                  )
+                  if provider and (
+                      "SecretProviderClass",
+                      namespace,
+                      provider,
+                  ) not in index:
+                      errors.append(
+                          f"{resource['_file']}: missing SecretProviderClass "
+                          f"{namespace}/{provider}"
+                      )
+
+          for resource in resources:
+              if resource["kind"] == "HorizontalPodAutoscaler":
+                  namespace = resource["metadata"].get("namespace", "default")
+                  target = resource["spec"]["scaleTargetRef"]
+                  if (target["kind"], namespace, target["name"]) not in index:
+                      errors.append(
+                          f"{resource['_file']}: missing HPA target "
+                          f"{namespace}/{target['name']}"
+                      )
+
+          if errors:
+              raise SystemExit("\n".join(errors))
+          print(f"Validated {len(resources)} Kubernetes resources")
+          PY

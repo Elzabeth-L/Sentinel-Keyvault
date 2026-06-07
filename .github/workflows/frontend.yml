@@ -1,0 +1,29 @@
+name: Frontend
+
+on:
+  push:
+    paths: ["apps/web/**"]
+  pull_request:
+    paths: ["apps/web/**"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    env:
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8080/api/v1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/web/package.json
+      - run: npm install
+      - run: npm run typecheck
+      - run: npm run build

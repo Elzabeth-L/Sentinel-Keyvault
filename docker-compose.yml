@@ -1,0 +1,166 @@
+name: sentinel
+
+x-backend-environment: &backend-environment
+  SENTINEL_ENVIRONMENT: local
+  SENTINEL_LOG_LEVEL: INFO
+  SENTINEL_DATABASE_URL: postgresql+asyncpg://sentinel:${POSTGRES_PASSWORD}@postgres:5432/sentinel
+  SENTINEL_ENTRA_AUDIENCE: ${SENTINEL_ENTRA_AUDIENCE:-}
+  SENTINEL_ENTRA_AUTHORITY_HOST: https://login.microsoftonline.com
+  SENTINEL_MICROSOFT_CLIENT_ID: ${SENTINEL_MICROSOFT_CLIENT_ID}
+  SENTINEL_MICROSOFT_CLIENT_SECRET: ${SENTINEL_MICROSOFT_CLIENT_SECRET}
+  SENTINEL_MICROSOFT_REDIRECT_URI: ${SENTINEL_MICROSOFT_REDIRECT_URI:-http://localhost:8080/auth/callback}
+  SENTINEL_FRONTEND_URL: ${SENTINEL_FRONTEND_URL:-http://localhost:8080}
+  SENTINEL_SESSION_COOKIE_NAME: sentinel_session
+  SENTINEL_SESSION_COOKIE_SECURE: "false"
+  SENTINEL_SESSION_SIGNING_KEY: ${SENTINEL_SESSION_SIGNING_KEY}
+  SENTINEL_TOKEN_ENCRYPTION_KEY: ${SENTINEL_TOKEN_ENCRYPTION_KEY}
+  SENTINEL_ALLOWED_TENANTS: ${SENTINEL_ALLOWED_TENANTS:-}
+  SENTINEL_CORS_ORIGINS: http://localhost:8080
+  SENTINEL_IDENTITY_SERVICE_URL: http://identity-service:8000
+  SENTINEL_AUDIT_SERVICE_URL: http://audit-service:8000
+  SENTINEL_RELATIONSHIP_SERVICE_URL: http://relationship-service:8000
+  SENTINEL_INTERNAL_API_TOKEN: ${SENTINEL_INTERNAL_API_TOKEN}
+  SENTINEL_AZURE_CLIENT_ID: ${SENTINEL_AZURE_CLIENT_ID:-}
+  SENTINEL_AZURE_CLIENT_CERTIFICATE_PATH: ${SENTINEL_AZURE_CLIENT_CERTIFICATE_PATH:-}
+  SENTINEL_BOOTSTRAP_TENANT_ID: ${SENTINEL_BOOTSTRAP_TENANT_ID}
+  SENTINEL_BOOTSTRAP_TENANT_NAME: ${SENTINEL_BOOTSTRAP_TENANT_NAME:-Sentinel Development Tenant}
+  SENTINEL_BOOTSTRAP_ADMIN_OBJECT_ID: ${SENTINEL_BOOTSTRAP_ADMIN_OBJECT_ID}
+  SENTINEL_BOOTSTRAP_ADMIN_NAME: ${SENTINEL_BOOTSTRAP_ADMIN_NAME:-Sentinel Administrator}
+
+x-backend: &backend
+  restart: unless-stopped
+  depends_on:
+    postgres:
+      condition: service_healthy
+  environment: *backend-environment
+  networks: [sentinel]
+  security_opt: ["no-new-privileges:true"]
+  read_only: true
+  tmpfs: ["/tmp"]
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: sentinel
+      POSTGRES_USER: sentinel
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sentinel -d sentinel"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [sentinel]
+
+  identity-service:
+    <<: *backend
+    build:
+      context: .
+      dockerfile: apps/identity-service/Dockerfile
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/live')"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  inventory-service:
+    <<: *backend
+    build:
+      context: .
+      dockerfile: apps/inventory-service/Dockerfile
+    depends_on:
+      postgres: { condition: service_healthy }
+      identity-service: { condition: service_healthy }
+
+  inventory-worker:
+    <<: *backend
+    build:
+      context: .
+      dockerfile: apps/inventory-service/Dockerfile
+    command: ["python", "-m", "sentinel_inventory.worker"]
+    depends_on:
+      postgres: { condition: service_healthy }
+      identity-service: { condition: service_healthy }
+
+  outbox-relay:
+    <<: *backend
+    build:
+      context: .
+      dockerfile: apps/audit-service/Dockerfile
+    command: ["python", "-m", "sentinel_common.outbox_worker"]
+    depends_on:
+      postgres: { condition: service_healthy }
+      audit-service: { condition: service_started }
+
+  relationship-service:
+    <<: *backend
+    build:
+      context: .
+      dockerfile: apps/relationship-service/Dockerfile
+    depends_on:
+      postgres: { condition: service_healthy }
+      identity-service: { condition: service_healthy }
+
+  change-intelligence-service:
+    <<: *backend
+    build:
+      context: .
+      dockerfile: apps/change-intelligence-service/Dockerfile
+    depends_on:
+      postgres: { condition: service_healthy }
+      identity-service: { condition: service_healthy }
+
+  operations-service:
+    <<: *backend
+    build:
+      context: .
+      dockerfile: apps/operations-service/Dockerfile
+    depends_on:
+      postgres: { condition: service_healthy }
+      identity-service: { condition: service_healthy }
+
+  audit-service:
+    <<: *backend
+    build:
+      context: .
+      dockerfile: apps/audit-service/Dockerfile
+    depends_on:
+      postgres: { condition: service_healthy }
+      identity-service: { condition: service_started }
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:8080/api/v1
+    restart: unless-stopped
+    networks: [sentinel]
+    security_opt: ["no-new-privileges:true"]
+
+  gateway:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports: ["8080:8080"]
+    volumes:
+      - ./deploy/compose/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./deploy/compose/proxy_params:/etc/nginx/proxy_params:ro
+    depends_on:
+      - web
+      - identity-service
+      - inventory-service
+      - relationship-service
+      - audit-service
+    networks: [sentinel]
+    security_opt: ["no-new-privileges:true"]
+
+volumes:
+  postgres-data:
+
+networks:
+  sentinel:
+    driver: bridge
