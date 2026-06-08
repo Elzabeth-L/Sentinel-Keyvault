@@ -5,7 +5,7 @@ metadata:
   namespace: sentinel-workers
   labels: {app.kubernetes.io/name: inventory-worker, app.kubernetes.io/part-of: sentinel}
 spec:
-  replicas: 1
+  replicas: 0
   selector:
     matchLabels: {app.kubernetes.io/name: inventory-worker}
   template:
@@ -61,7 +61,7 @@ metadata:
   namespace: sentinel-workers
   labels: {app.kubernetes.io/name: outbox-relay, app.kubernetes.io/part-of: sentinel}
 spec:
-  replicas: 1
+  replicas: 0
   selector:
     matchLabels: {app.kubernetes.io/name: outbox-relay}
   template:

@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2600" height="1500" viewBox="0 0 2600 1500">
+  <defs>
+    <marker id="ab" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#60a5fa"/></marker>
+    <marker id="ag" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#34d399"/></marker>
+    <marker id="ap" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#c084fc"/></marker>
+    <style>
+      .bg{fill:#08111f}.title{fill:#fff;font:700 34px Segoe UI,Arial}.sub{fill:#a9b7ca;font:15px Segoe UI,Arial}.h{fill:#fff;font:700 24px Segoe UI,Arial}.label{fill:#fff;font:700 15px Segoe UI,Arial;text-anchor:middle}.small{fill:#cbd5e1;font:12px Segoe UI,Arial;text-anchor:middle}.tiny{fill:#94a3b8;font:12px Segoe UI,Arial}.dev{fill:#10233a;stroke:#38bdf8;stroke-width:4}.prod{fill:#102417;stroke:#22c55e;stroke-width:4}.box{rx:22}.devnode{fill:#172554;stroke:#60a5fa;stroke-width:3}.prodnode{fill:#064e3b;stroke:#34d399;stroke-width:3}.edgeb{stroke:#60a5fa;stroke-width:3;fill:none;marker-end:url(#ab)}.edgeg{stroke:#34d399;stroke-width:3;fill:none;marker-end:url(#ag)}.edgep{stroke:#c084fc;stroke-width:3;fill:none;marker-end:url(#ap)}.warn{fill:#3b2f12;stroke:#fbbf24;stroke-width:3}
+    </style>
+  </defs>
+  <rect class="bg" width="2600" height="1500"/>
+  <text class="title" x="50" y="60">Sentinel Two-Environment Architecture: DEV vs PROD</text>
+  <text class="sub" x="52" y="95">DEV is cheaper and easier to debug. PROD is private, WAF-protected, monitored, backed up, and locked down with RBAC/policy.</text>
+
+  <circle class="devnode" cx="190" cy="180" r="42"/><text class="label" x="190" y="185">DEV</text><text class="small" x="190" y="245">dev.sentinel.vaultrix.in</text>
+  <circle class="prodnode" cx="1590" cy="180" r="42"/><text class="label" x="1590" y="185">PROD</text><text class="small" x="1590" y="245">sentinel.vaultrix.in</text>
+  <circle class="prodnode" cx="1810" cy="180" r="42"/><text class="label" x="1810" y="185">AFD</text><text class="small" x="1810" y="245">Front Door WAF</text>
+  <path class="edgeg" d="M1632 180 L1768 180"/>
+
+  <rect class="dev box" x="50" y="310" width="1160" height="1040" rx="32"/>
+  <text class="h" x="90" y="355">RG-DEV - lower cost isolated environment</text>
+  <rect class="prod box" x="1390" y="310" width="1160" height="1040" rx="32"/>
+  <text class="h" x="1430" y="355">RG-PROD - hardened production environment</text>
+
+  <!-- DEV -->
+  <rect x="100" y="430" width="1060" height="690" rx="28" fill="#0f2437" stroke="#38bdf8" stroke-width="3"/>
+  <text class="h" x="135" y="475">vnet-sentinel-dev 10.40.0.0/16</text>
+  <rect x="145" y="540" width="650" height="450" rx="24" fill="#12304a" stroke="#38bdf8" stroke-width="3"/>
+  <text class="label" x="250" y="580">snet-aks-dev</text>
+  <circle class="devnode" cx="250" cy="685" r="42"/><text class="label" x="250" y="690">AKS</text><text class="small" x="250" y="750">1-2 nodes</text>
+  <circle class="devnode" cx="450" cy="685" r="42"/><text class="label" x="450" y="690">LB</text><text class="small" x="450" y="750">public ingress ok</text>
+  <rect class="devnode" x="575" y="625" width="170" height="70" rx="15"/><text class="label" x="660" y="655">Services</text><text class="small" x="660" y="677">all microservices</text>
+  <rect class="devnode" x="575" y="760" width="170" height="70" rx="15"/><text class="label" x="660" y="790">Workers</text><text class="small" x="660" y="812">inventory/outbox</text>
+
+  <rect x="825" y="540" width="290" height="450" rx="24" fill="#11351f" stroke="#34d399" stroke-width="3"/>
+  <text class="label" x="970" y="580">private endpoints optional</text>
+  <circle class="prodnode" cx="920" cy="690" r="38"/><text class="label" x="920" y="695">KV</text><text class="small" x="920" y="745">dev secrets</text>
+  <circle class="prodnode" cx="1030" cy="690" r="38"/><text class="label" x="1030" y="695">ST</text><text class="small" x="1030" y="745">dev blobs</text>
+
+  <circle class="devnode" cx="180" cy="1190" r="42"/><text class="label" x="180" y="1195">PG</text><text class="small" x="180" y="1255">small/no HA</text>
+  <circle class="devnode" cx="360" cy="1190" r="42"/><text class="label" x="360" y="1195">ACR</text><text class="small" x="360" y="1255">Basic/Std</text>
+  <circle class="devnode" cx="540" cy="1190" r="42"/><text class="label" x="540" y="1195">APP</text><text class="small" x="540" y="1255">dev app reg</text>
+  <circle class="devnode" cx="720" cy="1190" r="42"/><text class="label" x="720" y="1195">LOG</text><text class="small" x="720" y="1255">low cap</text>
+  <circle class="warn" cx="900" cy="1190" r="42"/><text class="label" x="900" y="1195">POL</text><text class="small" x="900" y="1255">audit mode</text>
+
+  <path class="edgeb" d="M232 180 C360 290 430 440 450 643"/>
+  <path class="edgeb" d="M492 685 L575 660"/>
+  <path class="edgeb" d="M660 695 L210 1150"/>
+  <path class="edgeg" d="M745 660 L882 690"/>
+
+  <!-- PROD -->
+  <rect x="1440" y="430" width="1060" height="690" rx="28" fill="#0f2437" stroke="#22c55e" stroke-width="3"/>
+  <text class="h" x="1475" y="475">vnet-sentinel-prod 10.50.0.0/16</text>
+  <rect x="1485" y="540" width="260" height="450" rx="24" fill="#18263a" stroke="#93c5fd" stroke-width="3"/>
+  <text class="label" x="1615" y="580">snet-appgw-prod</text>
+  <circle class="prodnode" cx="1615" cy="690" r="42"/><text class="label" x="1615" y="695">AGW</text><text class="small" x="1615" y="755">WAF v2</text>
+
+  <rect x="1775" y="540" width="440" height="450" rx="24" fill="#12304a" stroke="#38bdf8" stroke-width="3"/>
+  <text class="label" x="1995" y="580">snet-aks-prod</text>
+  <circle class="prodnode" cx="1860" cy="690" r="42"/><text class="label" x="1860" y="695">AKS</text><text class="small" x="1860" y="755">autoscale</text>
+  <circle class="prodnode" cx="2050" cy="690" r="42"/><text class="label" x="2050" y="695">ING</text><text class="small" x="2050" y="755">internal only</text>
+  <rect class="prodnode" x="1840" y="820" width="170" height="70" rx="15"/><text class="label" x="1925" y="850">Services</text><text class="small" x="1925" y="872">all microservices</text>
+  <rect class="prodnode" x="2030" y="820" width="150" height="70" rx="15"/><text class="label" x="2105" y="850">Workers</text><text class="small" x="2105" y="872">async jobs</text>
+
+  <rect x="2245" y="540" width="210" height="210" rx="24" fill="#102a3a" stroke="#38bdf8" stroke-width="3"/>
+  <text class="label" x="2350" y="580">snet-db-prod</text>
+  <circle class="prodnode" cx="2350" cy="675" r="42"/><text class="label" x="2350" y="680">PG</text><text class="small" x="2350" y="740">private + HA</text>
+
+  <rect x="2245" y="790" width="210" height="200" rx="24" fill="#11351f" stroke="#34d399" stroke-width="3"/>
+  <text class="label" x="2350" y="830">snet-pe-prod</text>
+  <circle class="prodnode" cx="2310" cy="910" r="34"/><text class="label" x="2310" y="915">KV</text>
+  <circle class="prodnode" cx="2390" cy="910" r="34"/><text class="label" x="2390" y="915">PE</text>
+
+  <circle class="prodnode" cx="1515" cy="1190" r="42"/><text class="label" x="1515" y="1195">ACR</text><text class="small" x="1515" y="1255">private</text>
+  <circle class="prodnode" cx="1695" cy="1190" r="42"/><text class="label" x="1695" y="1195">APP</text><text class="small" x="1695" y="1255">prod app reg</text>
+  <circle class="prodnode" cx="1875" cy="1190" r="42"/><text class="label" x="1875" y="1195">LOG</text><text class="small" x="1875" y="1255">alerts</text>
+  <circle class="prodnode" cx="2055" cy="1190" r="42"/><text class="label" x="2055" y="1195">POL</text><text class="small" x="2055" y="1255">deny mode</text>
+  <circle class="prodnode" cx="2235" cy="1190" r="42"/><text class="label" x="2235" y="1195">BAK</text><text class="small" x="2235" y="1255">restore tested</text>
+
+  <path class="edgeg" d="M1852 180 C1810 310 1710 500 1615 648"/>
+  <path class="edgeg" d="M1657 690 L2008 690"/>
+  <path class="edgeg" d="M2050 732 L1925 820"/>
+  <path class="edgeg" d="M2010 855 L2308 675"/>
+  <path class="edgeg" d="M2105 890 L2310 910"/>
+  <path class="edgeg" d="M1515 1150 L1860 732"/>
+  <path class="edgep" d="M1695 1150 L1925 890"/>
+  <path class="edgeg" d="M1875 1150 L1860 732"/>
+  <path class="edgeg" d="M2055 1150 L1860 732"/>
+
+  <text class="tiny" x="80" y="1410">DEV: cheap, isolated, audit-mode policy, WAF optional, smaller DB, lower logging cap, no real customer data.</text>
+  <text class="tiny" x="1400" y="1410">PROD: Front Door + App Gateway WAF, private ingress, private data services, stricter RBAC, deny policies, alerts, backups, restore tests.</text>
+</svg>

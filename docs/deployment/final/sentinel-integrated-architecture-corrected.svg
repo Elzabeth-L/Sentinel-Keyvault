@@ -1,0 +1,192 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="1550" viewBox="0 0 2400 1550">
+  <defs>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#60a5fa"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#34d399"/>
+    </marker>
+    <marker id="arrow-purple" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#c084fc"/>
+    </marker>
+    <marker id="arrow-yellow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#fbbf24"/>
+    </marker>
+    <style>
+      .bg { fill: #08111f; }
+      .title { fill: #fff; font: 700 34px Segoe UI, Arial, sans-serif; }
+      .subtitle { fill: #a9b7ca; font: 15px Segoe UI, Arial, sans-serif; }
+      .section { fill: #dbeafe; font: 700 24px Segoe UI, Arial, sans-serif; }
+      .subsection { fill: #dcfce7; font: 700 22px Segoe UI, Arial, sans-serif; }
+      .subnet { fill: #bae6fd; font: 700 18px Segoe UI, Arial, sans-serif; }
+      .label { fill: #fff; font: 700 15px Segoe UI, Arial, sans-serif; text-anchor: middle; }
+      .small { fill: #cbd5e1; font: 12px Segoe UI, Arial, sans-serif; text-anchor: middle; }
+      .tiny { fill: #94a3b8; font: 12px Segoe UI, Arial, sans-serif; }
+      .rg { fill: #0e1a2c; stroke: #2563eb; stroke-width: 4; }
+      .vnet { fill: #0f2437; stroke: #22c55e; stroke-width: 4; }
+      .aks-subnet { fill: #12304a; stroke: #38bdf8; stroke-width: 3; }
+      .pe-subnet { fill: #11351f; stroke: #34d399; stroke-width: 3; }
+      .db-subnet { fill: #102a3a; stroke: #38bdf8; stroke-width: 3; }
+      .appgw-subnet { fill: #18263a; stroke: #93c5fd; stroke-width: 3; }
+      .node-blue { fill: #172554; stroke: #60a5fa; stroke-width: 3; }
+      .node-cyan { fill: #102a3a; stroke: #38bdf8; stroke-width: 3; }
+      .node-green { fill: #064e3b; stroke: #34d399; stroke-width: 3; }
+      .node-purple { fill: #2e1065; stroke: #c084fc; stroke-width: 3; }
+      .node-yellow { fill: #3b2f12; stroke: #fbbf24; stroke-width: 3; }
+      .node-gray { fill: #1f2937; stroke: #93c5fd; stroke-width: 3; }
+      .edge-blue { stroke: #60a5fa; stroke-width: 3; fill: none; marker-end: url(#arrow-blue); }
+      .edge-green { stroke: #34d399; stroke-width: 3; fill: none; marker-end: url(#arrow-green); }
+      .edge-purple { stroke: #c084fc; stroke-width: 3; fill: none; marker-end: url(#arrow-purple); }
+      .edge-yellow { stroke: #fbbf24; stroke-width: 3; fill: none; marker-end: url(#arrow-yellow); }
+    </style>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="2400" height="1550"/>
+  <text class="title" x="50" y="58">Sentinel Integrated Azure Architecture - Corrected</text>
+  <text class="subtitle" x="52" y="92">One RG, one VNet, Front Door + App Gateway WAF, AKS microservices, private PostgreSQL, Key Vault, Storage, ACR, Workload Identity, Azure Policy, observability.</text>
+
+  <!-- External / global edge -->
+  <circle class="node-gray" cx="120" cy="180" r="42"/>
+  <text class="label" x="120" y="185">USER</text>
+  <text class="small" x="120" y="245">Users</text>
+
+  <circle class="node-gray" cx="330" cy="180" r="42"/>
+  <text class="label" x="330" y="185">DNS</text>
+  <text class="small" x="330" y="245">sentinel.vaultrix.in</text>
+
+  <circle class="node-purple" cx="560" cy="180" r="42"/>
+  <text class="label" x="560" y="185">AFD</text>
+  <text class="small" x="560" y="245">Front Door Premium + WAF</text>
+
+  <circle class="node-purple" cx="800" cy="180" r="42"/>
+  <text class="label" x="800" y="185">ID</text>
+  <text class="small" x="800" y="245">Microsoft Entra App Reg</text>
+
+  <circle class="node-yellow" cx="1050" cy="180" r="42"/>
+  <text class="label" x="1050" y="185">ACR</text>
+  <text class="small" x="1050" y="245">Azure Container Registry</text>
+
+  <path class="edge-blue" d="M162 180 L288 180"/>
+  <path class="edge-blue" d="M372 180 L518 180"/>
+  <path class="edge-purple" d="M760 205 C690 290 650 380 585 520"/>
+
+  <!-- RG / VNet -->
+  <rect class="rg" x="45" y="310" width="2300" height="1120" rx="32"/>
+  <text class="section" x="85" y="355">Resource Group: RG-1 / rg-sentinel</text>
+
+  <rect class="vnet" x="90" y="505" width="2190" height="800" rx="32"/>
+  <text class="subsection" x="130" y="550">Virtual Network: RG-1-VNET-1 / vnet-sentinel</text>
+
+  <!-- RG resources outside VNet -->
+  <circle class="node-blue" cx="150" cy="420" r="42"/>
+  <text class="label" x="150" y="425">MI</text>
+  <text class="small" x="150" y="485">Managed identities</text>
+
+  <circle class="node-purple" cx="360" cy="420" r="42"/>
+  <text class="label" x="360" y="425">APP</text>
+  <text class="small" x="360" y="485">App registration</text>
+
+  <circle class="node-yellow" cx="590" cy="420" r="42"/>
+  <text class="label" x="590" y="425">BUILD</text>
+  <text class="small" x="590" y="485">Build VM / runner</text>
+
+  <circle class="node-cyan" cx="820" cy="420" r="42"/>
+  <text class="label" x="820" y="425">LOG</text>
+  <text class="small" x="820" y="485">Log Analytics + App Insights</text>
+
+  <circle class="node-cyan" cx="1080" cy="420" r="42"/>
+  <text class="label" x="1080" y="425">POL</text>
+  <text class="small" x="1080" y="485">Azure Policy</text>
+
+  <!-- Subnets -->
+  <rect class="appgw-subnet" x="130" y="610" width="360" height="230" rx="24"/>
+  <text class="subnet" x="160" y="645">snet-appgw</text>
+  <circle class="node-gray" cx="310" cy="735" r="42"/>
+  <text class="label" x="310" y="730">AGW</text>
+  <text class="small" x="310" y="785">Application Gateway WAF v2</text>
+
+  <rect class="aks-subnet" x="540" y="610" width="940" height="560" rx="24"/>
+  <text class="subnet" x="570" y="645">snet-aks</text>
+  <circle class="node-cyan" cx="650" cy="735" r="42"/>
+  <text class="label" x="650" y="730">AKS</text>
+  <text class="small" x="650" y="785">AKS cluster</text>
+
+  <circle class="node-cyan" cx="850" cy="735" r="42"/>
+  <text class="label" x="850" y="730">ING</text>
+  <text class="small" x="850" y="785">Internal ingress</text>
+
+  <rect class="node-blue" x="610" y="875" width="130" height="62" rx="14"/>
+  <text class="label" x="675" y="900">Web</text>
+  <text class="small" x="675" y="922">Next.js</text>
+  <rect class="node-blue" x="765" y="875" width="130" height="62" rx="14"/>
+  <text class="label" x="830" y="900">Identity</text>
+  <text class="small" x="830" y="922">Auth/RBAC</text>
+  <rect class="node-blue" x="920" y="875" width="130" height="62" rx="14"/>
+  <text class="label" x="985" y="900">Inventory</text>
+  <text class="small" x="985" y="922">ARG sync</text>
+  <rect class="node-blue" x="1075" y="875" width="150" height="62" rx="14"/>
+  <text class="label" x="1150" y="900">Relationship</text>
+  <text class="small" x="1150" y="922">Graph</text>
+  <rect class="node-blue" x="1250" y="875" width="150" height="62" rx="14"/>
+  <text class="label" x="1325" y="900">Analysis</text>
+  <text class="small" x="1325" y="922">Risk engine</text>
+
+  <rect class="node-blue" x="680" y="980" width="150" height="62" rx="14"/>
+  <text class="label" x="755" y="1005">Operations</text>
+  <text class="small" x="755" y="1027">Approval hooks</text>
+  <rect class="node-blue" x="855" y="980" width="150" height="62" rx="14"/>
+  <text class="label" x="930" y="1005">Audit</text>
+  <text class="small" x="930" y="1027">Events</text>
+  <rect class="node-blue" x="1030" y="980" width="160" height="62" rx="14"/>
+  <text class="label" x="1110" y="1005">Workers</text>
+  <text class="small" x="1110" y="1027">Inventory/outbox</text>
+  <rect class="node-blue" x="1215" y="980" width="170" height="62" rx="14"/>
+  <text class="label" x="1300" y="1005">Service Accts</text>
+  <text class="small" x="1300" y="1027">Workload Identity</text>
+
+  <!-- DB subnet -->
+  <rect class="db-subnet" x="1530" y="610" width="330" height="230" rx="24"/>
+  <text class="subnet" x="1560" y="645">snet-postgres delegated</text>
+  <circle class="node-cyan" cx="1695" cy="735" r="42"/>
+  <text class="label" x="1695" y="730">PG</text>
+  <text class="small" x="1695" y="785">PostgreSQL private access</text>
+
+  <!-- Private endpoint subnet -->
+  <rect class="pe-subnet" x="1530" y="890" width="690" height="280" rx="24"/>
+  <text class="subnet" x="1560" y="925">snet-private-endpoints</text>
+  <circle class="node-green" cx="1635" cy="1030" r="42"/>
+  <text class="label" x="1635" y="1035">KV</text>
+  <text class="small" x="1635" y="1095">Key Vault PE</text>
+  <circle class="node-green" cx="1810" cy="1030" r="42"/>
+  <text class="label" x="1810" y="1035">ST</text>
+  <text class="small" x="1810" y="1095">Storage blob PE</text>
+  <circle class="node-green" cx="1985" cy="1030" r="42"/>
+  <text class="label" x="1985" y="1035">ACR</text>
+  <text class="small" x="1985" y="1095">ACR PE</text>
+
+  <rect class="node-green" x="1595" y="1215" width="570" height="70" rx="18"/>
+  <text class="label" x="1880" y="1245">Private DNS zones</text>
+  <text class="small" x="1880" y="1268">vaultcore, blob, azurecr, postgres linked to VNet</text>
+
+  <!-- Edges -->
+  <path class="edge-blue" d="M602 180 C760 260 760 500 310 693"/>
+  <path class="edge-blue" d="M352 735 L808 735"/>
+  <path class="edge-blue" d="M850 777 L675 875"/>
+  <path class="edge-blue" d="M850 777 L830 875"/>
+  <path class="edge-blue" d="M850 777 L985 875"/>
+  <path class="edge-blue" d="M850 777 L1150 875"/>
+  <path class="edge-blue" d="M850 777 L1325 875"/>
+
+  <path class="edge-purple" d="M830 875 C780 600 785 420 800 222"/>
+  <path class="edge-cyan edge-blue" d="M830 937 C1050 700 1450 700 1653 735"/>
+  <path class="edge-green" d="M1300 980 C1390 960 1510 960 1598 1030"/>
+  <path class="edge-green" d="M930 1042 C1170 1110 1480 1110 1768 1030"/>
+  <path class="edge-yellow" d="M632 420 C770 350 930 280 1012 212"/>
+  <path class="edge-yellow" d="M1050 222 C980 390 820 560 650 693"/>
+  <path class="edge-blue" d="M1080 462 C1000 570 820 640 650 693"/>
+  <path class="edge-green" d="M1880 1215 L1810 1072"/>
+  <path class="edge-green" d="M1880 1215 L1635 1072"/>
+  <path class="edge-green" d="M1880 1215 L1985 1072"/>
+
+  <text class="tiny" x="60" y="1485">Corrections included: Front Door before App Gateway, App Gateway in dedicated subnet, AKS internal ingress, all microservices/workers, PostgreSQL in delegated DB subnet, Key Vault/Storage/ACR private endpoints, private DNS zones, managed identities, Azure Policy, and observability.</text>
+</svg>
