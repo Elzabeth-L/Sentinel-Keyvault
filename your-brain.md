@@ -443,13 +443,15 @@ the content now documents the simple one-resource-group AKS deployment. It inclu
 Portal fields, Docker Hub build/push commands, migration execution from the Docker VM,
 manifest replacement, deployment, verification, and cleanup.
 
-The deployment guide documents a temporary public IP setup first:
-`http://<AKS_PUBLIC_IP>` and `http://<AKS_PUBLIC_IP>/auth/callback`. The guide warns
-that Microsoft Entra may require DNS and HTTPS for public redirects. Manifests were
-adjusted for this mode: `deploy/kubernetes/50-gateway-loadbalancer.yaml` exposes an
-Nginx gateway through a `LoadBalancer`, `deploy/kubernetes/01-config.yaml` uses
-host-only cookies and `SENTINEL_SESSION_COOKIE_SECURE=false`, and the web image must
-be rebuilt with `NEXT_PUBLIC_API_BASE_URL=http://<AKS_PUBLIC_IP>/api/v1`.
+The deployment guide now documents the custom-domain HTTPS setup:
+`https://sentinel.vaultrix.in` and
+`https://sentinel.vaultrix.in/auth/callback`. DNS should point
+`sentinel.vaultrix.in` to AKS LoadBalancer IP `4.187.176.232`. The gateway manifest
+terminates TLS on port 443 using Kubernetes secret `sentinel-gateway-tls` in namespace
+`sentinel-app`; port 80 redirects to HTTPS. `deploy/kubernetes/01-config.yaml` uses
+secure cookies, and the current web image is
+`elzabeth03/sentinel-web:v1.0.3`, built with
+`NEXT_PUBLIC_API_BASE_URL=https://sentinel.vaultrix.in/api/v1`.
 
 On 2026-06-08 a demo-only extension was appended to the deployment guide. The newest
 minimal demo path runs only web, Identity, and the gateway. Inventory, Relationship,
@@ -467,6 +469,9 @@ because direct SSH to `20.244.8.208` timed out. Auth-demo images were built on t
 after the real AKS LoadBalancer IP is known. Azure PostgreSQL `RG-1/elz-db` had
 `azure.extensions=pgcrypto` enabled. Migration against database `mydb` completed
 successfully through revisions `20260606_0001`, `20260607_0002`, and `20260607_0003`.
+After the LoadBalancer IP was known and Entra rejected public HTTP redirect URIs, the
+web image was rebuilt and pushed as `elzabeth03/sentinel-web:v1.0.3` with
+`NEXT_PUBLIC_API_BASE_URL=https://sentinel.vaultrix.in/api/v1`.
 
 ## API and Event Standards
 

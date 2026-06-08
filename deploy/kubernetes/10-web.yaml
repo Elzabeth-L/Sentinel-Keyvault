@@ -43,7 +43,7 @@ spec:
               app.kubernetes.io/name: web
       containers:
         - name: web
-          image: elzabeth03/sentinel-web:v1.0.1
+          image: elzabeth03/sentinel-web:v1.0.3
           imagePullPolicy: IfNotPresent
           ports:
             - name: http

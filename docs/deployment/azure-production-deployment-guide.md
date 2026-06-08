@@ -41,26 +41,29 @@ Azure resources in one resource group:
 
 ## Important Reality Check About Public IP Login
 
-Using the AKS LoadBalancer public IP is okay for the first simple deployment. The app
-will be reachable at:
+Using the AKS LoadBalancer public IP is okay for first exposure, but Microsoft Entra
+requires HTTPS for public redirect URIs. For this deployment, use:
 
 ```text
-http://<AKS_PUBLIC_IP>
+https://sentinel.vaultrix.in
 ```
 
-However, Microsoft Entra sign-in for a public web redirect is much happier with HTTPS
-and a real DNS name. If Entra refuses `http://<AKS_PUBLIC_IP>/auth/callback`, the fix
-is not more AKS work. The fix is adding a DNS name and HTTPS later.
-
-For now the manifests use:
+Create a DNS `A` record:
 
 ```text
-SENTINEL_FRONTEND_URL=http://REPLACE_ME_SENTINEL_PUBLIC_IP
-SENTINEL_MICROSOFT_REDIRECT_URI=http://REPLACE_ME_SENTINEL_PUBLIC_IP/auth/callback
-SENTINEL_SESSION_COOKIE_SECURE=false
+sentinel.vaultrix.in -> 4.187.176.232
 ```
 
-Later, change those to `https://your-domain`.
+The manifests use:
+
+```text
+SENTINEL_FRONTEND_URL=https://sentinel.vaultrix.in
+SENTINEL_MICROSOFT_REDIRECT_URI=https://sentinel.vaultrix.in/auth/callback
+SENTINEL_SESSION_COOKIE_SECURE=true
+```
+
+The gateway expects a Kubernetes TLS secret named `sentinel-gateway-tls` in namespace
+`sentinel-app`.
 
 ## Values To Use
 
@@ -143,7 +146,7 @@ This is your login application. It must allow personal Microsoft accounts too.
      `Accounts in any organizational directory and personal Microsoft accounts`.
    - Redirect URI platform: `Web`.
    - Redirect URI:
-     `http://REPLACE_ME_SENTINEL_PUBLIC_IP/auth/callback`.
+     `https://sentinel.vaultrix.in/auth/callback`.
 5. Select `Register`.
 
 After creation:
@@ -152,7 +155,7 @@ After creation:
 2. Copy `Directory (tenant) ID`.
 3. Open `Authentication`.
 4. Confirm:
-   - Web redirect URI: `http://REPLACE_ME_SENTINEL_PUBLIC_IP/auth/callback`.
+   - Web redirect URI: `https://sentinel.vaultrix.in/auth/callback`.
    - Access tokens implicit grant: unchecked.
    - ID tokens implicit grant: unchecked.
    - Allow public client flows: `No`.
@@ -1035,12 +1038,13 @@ docker push $DOCKERHUB/sentinel-migration:$TAG
 docker push $DOCKERHUB/sentinel-web:$TAG
 ```
 
-If the AKS public IP is not known yet, use this order:
+If the DNS name is not ready yet, use this order:
 
 1. Build and push `identity-service` and `migration`.
 2. Deploy the gateway once.
 3. Get the public IP.
-4. Rebuild and push only `sentinel-web` with the real public IP.
+4. Create the DNS `A` record for `sentinel.vaultrix.in`.
+5. Rebuild and push only `sentinel-web` with the real HTTPS domain.
 
 ### Minimal Step 12: Run Database Migration
 
@@ -1142,6 +1146,29 @@ kubectl create service clusterip audit-service `
   --dry-run=client -o yaml | kubectl apply -f -
 ```
 
+Create the TLS secret before applying the gateway:
+
+```powershell
+kubectl create secret tls sentinel-gateway-tls `
+  --cert=sentinel.vaultrix.in.crt `
+  --key=sentinel.vaultrix.in.key `
+  -n sentinel-app
+```
+
+The certificate must be valid for:
+
+```text
+sentinel.vaultrix.in
+```
+
+Also create this DNS record wherever `vaultrix.in` is hosted:
+
+```text
+Type: A
+Name: sentinel
+Value: 4.187.176.232
+```
+
 Then apply the gateway:
 
 ```powershell
@@ -1159,26 +1186,26 @@ After the IP exists:
 1. Add/update Entra redirect URI:
 
 ```text
-http://<AKS_PUBLIC_IP>/auth/callback
+https://sentinel.vaultrix.in/auth/callback
 ```
 
 2. Update `deploy/kubernetes/01-config.yaml`:
 
 ```text
-SENTINEL_MICROSOFT_REDIRECT_URI=http://<AKS_PUBLIC_IP>/auth/callback
-SENTINEL_FRONTEND_URL=http://<AKS_PUBLIC_IP>
-SENTINEL_CORS_ORIGINS=http://<AKS_PUBLIC_IP>
+SENTINEL_MICROSOFT_REDIRECT_URI=https://sentinel.vaultrix.in/auth/callback
+SENTINEL_FRONTEND_URL=https://sentinel.vaultrix.in
+SENTINEL_CORS_ORIGINS=https://sentinel.vaultrix.in
+SENTINEL_SESSION_COOKIE_SECURE=true
 ```
 
 3. Rebuild and push the web image:
 
 ```bash
 DOCKERHUB="your-dockerhub-username"
-TAG="v1"
-PUBLIC_IP="<AKS_PUBLIC_IP>"
+TAG="v1.0.3"
 
 docker build \
-  --build-arg NEXT_PUBLIC_API_BASE_URL=http://$PUBLIC_IP/api/v1 \
+  --build-arg NEXT_PUBLIC_API_BASE_URL=https://sentinel.vaultrix.in/api/v1 \
   -t $DOCKERHUB/sentinel-web:$TAG \
   -f apps/web/Dockerfile .
 
@@ -1213,13 +1240,13 @@ sentinel-gateway
 Open:
 
 ```text
-http://<AKS_PUBLIC_IP>
+https://sentinel.vaultrix.in
 ```
 
 Health checks:
 
 ```text
-http://<AKS_PUBLIC_IP>/api/v1/auth/health/live
+https://sentinel.vaultrix.in/api/v1/auth/health/live
 ```
 
 When you want the full platform later, build the remaining service images, create the
