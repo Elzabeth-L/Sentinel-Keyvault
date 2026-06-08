@@ -12,10 +12,23 @@ from sqlalchemy import (
     Uuid,
     func,
 )
+from sqlalchemy.dialects.postgresql import ENUM as PostgreSQLEnum
 from sqlalchemy.orm import Mapped, mapped_column
 
 from sentinel_common.db import Base
 from sentinel_common.models import TimestampMixin, UUIDPrimaryKeyMixin
+
+
+tenant_status_enum = PostgreSQLEnum(
+    "pending_consent",
+    "active",
+    "suspended",
+    "offboarding",
+    "offboarded",
+    name="tenant_status",
+    schema="identity",
+    create_type=False,
+)
 
 
 class Tenant(UUIDPrimaryKeyMixin, TimestampMixin, Base):
@@ -26,7 +39,7 @@ class Tenant(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     identity_scope_key: Mapped[str] = mapped_column(String(128), nullable=False, unique=True)
     account_type: Mapped[str] = mapped_column(String(32), nullable=False, default="organization")
     display_name: Mapped[str] = mapped_column(String(255), nullable=False)
-    status: Mapped[str] = mapped_column(String(32), nullable=False, default="active")
+    status: Mapped[str] = mapped_column(tenant_status_enum, nullable=False, default="active")
     consented_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     version: Mapped[int] = mapped_column(nullable=False, default=1)
 
