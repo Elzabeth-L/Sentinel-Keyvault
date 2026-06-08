@@ -15,7 +15,7 @@ data:
   SENTINEL_SESSION_COOKIE_SECURE: "true"
   SENTINEL_SESSION_TTL_SECONDS: "28800"
   SENTINEL_ALLOWED_TENANTS: "[]"
-  SENTINEL_CORS_ORIGINS: https://sentinel.vaultrix.in
+  SENTINEL_CORS_ORIGINS: '["https://sentinel.vaultrix.in"]'
   SENTINEL_IDENTITY_SERVICE_URL: http://identity-service.sentinel-app.svc.cluster.local
   SENTINEL_AUDIT_SERVICE_URL: http://audit-service.sentinel-app.svc.cluster.local
   SENTINEL_RELATIONSHIP_SERVICE_URL: http://relationship-service.sentinel-app.svc.cluster.local
