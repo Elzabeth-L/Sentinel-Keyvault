@@ -43,7 +43,7 @@ spec:
               app.kubernetes.io/name: web
       containers:
         - name: web
-          image: REPLACE_ME_DOCKERHUB_USERNAME/sentinel-web:REPLACE_ME_IMAGE_TAG
+          image: elzabeth03/sentinel-web:v1.0.1
           imagePullPolicy: IfNotPresent
           ports:
             - name: http

@@ -105,7 +105,7 @@ spec:
   egress:
     - to:
         - ipBlock:
-            cidr: REPLACE_ME_POSTGRES_PRIVATE_IP_OR_CIDR
+            cidr: 0.0.0.0/0
       ports:
         - {protocol: TCP, port: 5432}
 ---
@@ -118,7 +118,7 @@ spec:
   egress:
     - to:
         - ipBlock:
-            cidr: REPLACE_ME_POSTGRES_PRIVATE_IP_OR_CIDR
+            cidr: 0.0.0.0/0
       ports:
         - {protocol: TCP, port: 5432}
 ---

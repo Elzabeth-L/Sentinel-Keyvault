@@ -43,7 +43,7 @@ spec:
               app.kubernetes.io/name: inventory-service
       containers:
         - name: inventory-service
-          image: REPLACE_ME_DOCKERHUB_USERNAME/sentinel-inventory-service:REPLACE_ME_IMAGE_TAG
+          image: elzabeth03/sentinel-inventory-service:v1.0.0
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
