@@ -26,6 +26,8 @@ spec:
       serviceAccountName: identity-service
       securityContext:
         runAsNonRoot: true
+        runAsUser: 102
+        runAsGroup: 102
         seccompProfile:
           type: RuntimeDefault
       topologySpreadConstraints:

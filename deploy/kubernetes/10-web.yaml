@@ -26,6 +26,8 @@ spec:
       serviceAccountName: web
       securityContext:
         runAsNonRoot: true
+        runAsUser: 100
+        runAsGroup: 100
         seccompProfile:
           type: RuntimeDefault
       topologySpreadConstraints:
