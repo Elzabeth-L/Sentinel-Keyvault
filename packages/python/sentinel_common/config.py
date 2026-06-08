@@ -42,6 +42,8 @@ class Settings(BaseSettings):
     bootstrap_admin_object_id: str | None = None
     bootstrap_admin_name: str = "Sentinel Administrator"
     relationship_service_url: AnyHttpUrl = AnyHttpUrl("http://localhost:8003")
+    login_blob_account_url: AnyHttpUrl | None = None
+    login_blob_container_name: str = "sentinel-login-events"
 
     @field_validator("allowed_tenants", "cors_origins", mode="before")
     @classmethod

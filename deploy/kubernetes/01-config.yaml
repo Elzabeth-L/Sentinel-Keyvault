@@ -19,6 +19,9 @@ data:
   SENTINEL_IDENTITY_SERVICE_URL: http://identity-service.sentinel-app.svc.cluster.local
   SENTINEL_AUDIT_SERVICE_URL: http://audit-service.sentinel-app.svc.cluster.local
   SENTINEL_RELATIONSHIP_SERVICE_URL: http://relationship-service.sentinel-app.svc.cluster.local
+  # Set to https://<storage-account-name>.blob.core.windows.net to record successful logins.
+  SENTINEL_LOGIN_BLOB_ACCOUNT_URL: ""
+  SENTINEL_LOGIN_BLOB_CONTAINER_NAME: sentinel-login-events
   AZURE_TENANT_ID: 83474cb5-f1fa-4d06-906c-e5dad12ce3b9
 ---
 apiVersion: v1

@@ -14,6 +14,7 @@ dependencies = [
   "azure-keyvault-secrets>=4.9,<5",
   "azure-mgmt-resource>=23.2,<24",
   "azure-mgmt-resourcegraph>=8.0,<9",
+  "azure-storage-blob>=12.24,<13",
   "cryptography>=43,<49",
   "fastapi>=0.115,<1",
   "httpx>=0.28,<1",

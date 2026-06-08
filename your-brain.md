@@ -368,6 +368,15 @@ Current simple Azure target:
 - OIDC issuer, Workload Identity, and Key Vault CSI
 - default-deny NetworkPolicies with explicit allow rules
 
+For the minimal demonstrator, the identity service uses the Blob Storage account as a
+visible post-login event sink. After a successful OAuth callback and database commit,
+it writes a non-sensitive JSON receipt beneath
+`sentinel-login-events/login-events/YYYY/MM/DD/`. The write uses AKS Workload Identity
+and `DefaultAzureCredential`; no storage key or connection string is stored. The UAMI
+requires `Storage Blob Data Contributor` on the Storage Account. Blob recording is
+enabled only when `SENTINEL_LOGIN_BLOB_ACCOUNT_URL` is configured, and failures are
+logged without failing user authentication.
+
 The simple setup intentionally omits Application Gateway, ACR, Service Bus, Log
 Analytics, immutable audit storage, multiple resource groups, HPA/PDBs, and the
 Kubernetes migration Job. Add those later only when the deployment needs that level of

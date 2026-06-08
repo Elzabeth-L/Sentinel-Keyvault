@@ -1,5 +1,6 @@
 import base64
 import hashlib
+import logging
 import secrets
 from contextlib import asynccontextmanager
 from uuid import UUID
@@ -27,14 +28,24 @@ from sentinel_identity.schemas import (
 )
 from sentinel_identity.service import IdentityService, ResolvedIdentity
 from sentinel_identity.session import SessionClaims, SessionCodec, TokenCipher
+from sentinel_identity.storage import LoginBlobRecorder
 
 settings = get_settings().model_copy(update={"service_name": "identity-service"})
+logger = logging.getLogger(__name__)
 engine = create_engine(settings)
 session_factory = create_session_factory(engine)
 validator = EntraTokenValidator(settings)
 session_codec = SessionCodec(settings)
 token_cipher = TokenCipher(settings)
 oauth = MicrosoftOAuthService(settings)
+login_blob_recorder = (
+    LoginBlobRecorder(
+        str(settings.login_blob_account_url),
+        settings.login_blob_container_name,
+    )
+    if settings.login_blob_account_url
+    else None
+)
 get_session, get_identity = build_dependencies(
     validator,
     session_codec,
@@ -49,6 +60,8 @@ async def lifespan(_: FastAPI):
         async with session.begin():
             await bootstrap_identity(session, settings)
     yield
+    if login_blob_recorder is not None:
+        await login_blob_recorder.close()
     await engine.dispose()
 
 
@@ -136,6 +149,30 @@ async def callback(
                     entity_id=str(identity.user.id),
                     outcome="succeeded",
                 ),
+            )
+    if login_blob_recorder is not None:
+        try:
+            blob_name = await login_blob_recorder.record_login(
+                identity,
+                request.state.correlation_id,
+            )
+            logger.info(
+                "login_blob_written",
+                extra={
+                    "blob_name": blob_name,
+                    "tenant_id": str(identity.tenant.id),
+                    "user_id": str(identity.user.id),
+                    "correlation_id": request.state.correlation_id,
+                },
+            )
+        except Exception:
+            logger.exception(
+                "login_blob_write_failed",
+                extra={
+                    "tenant_id": str(identity.tenant.id),
+                    "user_id": str(identity.user.id),
+                    "correlation_id": request.state.correlation_id,
+                },
             )
     session_token = session_codec.encode(
         SessionClaims(

@@ -1,0 +1,1092 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sentinel Key Vault Presentation</title>
+  <style>
+    :root {
+      --bg: #07111f;
+      --panel: #0e1f35;
+      --panel-2: #102942;
+      --card: #f8fbff;
+      --text: #eef6ff;
+      --muted: #9db5cf;
+      --ink: #102033;
+      --soft: #dbe8f6;
+      --azure: #0078d4;
+      --cyan: #38bdf8;
+      --blue: #2563eb;
+      --green: #22c55e;
+      --amber: #f59e0b;
+      --red: #ef4444;
+      --line: rgba(148, 178, 210, 0.28);
+      --shadow: 0 22px 70px rgba(0, 0, 0, 0.28);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 82% 10%, rgba(56, 189, 248, 0.2), transparent 30%),
+        radial-gradient(circle at 16% 86%, rgba(0, 120, 212, 0.2), transparent 28%),
+        var(--bg);
+      font-family: "Segoe UI", Inter, Arial, sans-serif;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    .deck {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: none;
+      grid-template-rows: auto 1fr auto;
+      gap: 28px;
+      width: 100%;
+      height: 100%;
+      padding: clamp(34px, 5vh, 62px) clamp(44px, 6vw, 86px) 34px;
+      overflow: hidden;
+    }
+
+    .slide.active {
+      display: grid;
+      animation: enter 220ms ease-out;
+    }
+
+    @keyframes enter {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .slide::before {
+      content: "";
+      position: absolute;
+      inset: 20px;
+      z-index: -1;
+      border: 1px solid var(--line);
+      border-radius: 30px;
+      background: linear-gradient(135deg, rgba(14, 31, 53, 0.88), rgba(7, 17, 31, 0.76));
+      box-shadow: var(--shadow);
+    }
+
+    .head,
+    .foot {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 22px;
+    }
+
+    .kicker {
+      margin: 0 0 10px;
+      color: var(--cyan);
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin-top: 0;
+    }
+
+    h1 {
+      max-width: 980px;
+      margin-bottom: 0;
+      font-size: clamp(48px, 6vw, 86px);
+      line-height: 0.98;
+      letter-spacing: -0.05em;
+    }
+
+    h2 {
+      max-width: 1020px;
+      margin-bottom: 0;
+      font-size: clamp(34px, 4.2vw, 60px);
+      line-height: 1.02;
+      letter-spacing: -0.035em;
+    }
+
+    h3 {
+      margin-bottom: 12px;
+      font-size: clamp(19px, 1.45vw, 25px);
+      line-height: 1.15;
+    }
+
+    .number {
+      flex: 0 0 auto;
+      color: var(--muted);
+      font-weight: 800;
+      letter-spacing: 0.08em;
+    }
+
+    .body {
+      display: grid;
+      align-items: center;
+      min-height: 0;
+      gap: clamp(22px, 3.6vw, 48px);
+    }
+
+    .two {
+      grid-template-columns: minmax(0, 1.05fr) minmax(360px, 0.95fr);
+    }
+
+    .three {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .lead {
+      max-width: 960px;
+      margin-bottom: 24px;
+      color: #d8e9fb;
+      font-size: clamp(21px, 2.2vw, 31px);
+      line-height: 1.35;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .pill {
+      padding: 10px 14px;
+      border: 1px solid rgba(125, 188, 255, 0.34);
+      border-radius: 999px;
+      background: rgba(0, 120, 212, 0.16);
+      color: #d9efff;
+      font-size: 14px;
+      font-weight: 750;
+    }
+
+    .card {
+      padding: 22px;
+      border: 1px solid rgba(164, 190, 219, 0.35);
+      border-radius: 22px;
+      background: rgba(248, 251, 255, 0.94);
+      color: var(--ink);
+      box-shadow: 0 12px 34px rgba(0, 0, 0, 0.18);
+    }
+
+    .card.dark {
+      background: rgba(11, 29, 50, 0.88);
+      color: var(--text);
+    }
+
+    .card h3 {
+      color: inherit;
+    }
+
+    .card p {
+      margin-bottom: 0;
+      color: #425a73;
+      font-size: 16px;
+      line-height: 1.46;
+    }
+
+    .card.dark p {
+      color: var(--muted);
+    }
+
+    .statement {
+      padding: 22px 26px;
+      border-left: 5px solid var(--cyan);
+      border-radius: 16px;
+      background: rgba(56, 189, 248, 0.1);
+      color: #eaf7ff;
+      font-size: clamp(22px, 2.1vw, 32px);
+      font-weight: 800;
+      line-height: 1.25;
+    }
+
+    .list {
+      display: grid;
+      gap: 14px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .list li {
+      position: relative;
+      padding-left: 30px;
+      color: #dbeaff;
+      font-size: clamp(17px, 1.55vw, 22px);
+      line-height: 1.36;
+    }
+
+    .list li::before {
+      content: "";
+      position: absolute;
+      top: 0.58em;
+      left: 4px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--cyan);
+    }
+
+    .diagram {
+      padding: 18px;
+      border: 1px solid rgba(148, 178, 210, 0.35);
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.96);
+      color: var(--ink);
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.22);
+    }
+
+    .diagram svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      max-height: 62vh;
+    }
+
+    .node {
+      fill: #f8fbff;
+      stroke: #88a9c7;
+      stroke-width: 2;
+    }
+
+    .node-strong {
+      fill: #e8f5ff;
+      stroke: #0078d4;
+      stroke-width: 2.5;
+    }
+
+    .node-vault {
+      fill: #fff7dd;
+      stroke: #d97706;
+      stroke-width: 3;
+    }
+
+    .zone {
+      fill: #eef7ff;
+      stroke: #7aa8cc;
+      stroke-width: 2;
+      stroke-dasharray: 9 6;
+    }
+
+    .zone-green {
+      fill: #edfdf4;
+      stroke: #5aae78;
+      stroke-width: 2;
+      stroke-dasharray: 9 6;
+    }
+
+    .label {
+      fill: #132b43;
+      font-size: 13px;
+      font-weight: 800;
+      text-anchor: middle;
+    }
+
+    .small {
+      fill: #5b7188;
+      font-size: 10.5px;
+      font-weight: 650;
+      text-anchor: middle;
+    }
+
+    .arrow {
+      fill: none;
+      stroke-width: 2.4;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      marker-end: url(#arrow);
+    }
+
+    .arrow-blue {
+      stroke: #2563eb;
+    }
+
+    .arrow-amber {
+      stroke: #d97706;
+      stroke-dasharray: 7 5;
+    }
+
+    .arrow-green {
+      stroke: #16a34a;
+    }
+
+    .grid-cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .mini {
+      min-height: 150px;
+      padding: 18px;
+      border-top: 5px solid var(--accent, var(--azure));
+    }
+
+    .mini strong {
+      display: block;
+      margin-bottom: 10px;
+      color: var(--ink);
+      font-size: 20px;
+    }
+
+    .mini span {
+      color: #50657a;
+      font-size: 15px;
+      line-height: 1.38;
+    }
+
+    .chain {
+      display: grid;
+      gap: 10px;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 44px 1fr;
+      gap: 12px;
+      align-items: center;
+      padding: 14px 16px;
+      border: 1px solid rgba(148, 178, 210, 0.34);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .idx {
+      display: grid;
+      place-items: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--cyan);
+      color: #061627;
+      font-weight: 900;
+    }
+
+    .step strong {
+      display: block;
+      margin-bottom: 3px;
+      color: #f3f9ff;
+      font-size: 18px;
+    }
+
+    .step span {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.35;
+    }
+
+    .terminal {
+      padding: 22px;
+      border: 1px solid rgba(80, 110, 141, 0.65);
+      border-radius: 18px;
+      background: #07111f;
+      color: #c8facc;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: clamp(14px, 1.1vw, 17px);
+      line-height: 1.55;
+      white-space: pre-wrap;
+    }
+
+    .check {
+      display: grid;
+      gap: 12px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .check li {
+      position: relative;
+      padding-left: 32px;
+      color: #dcecff;
+      font-size: clamp(16px, 1.45vw, 21px);
+      line-height: 1.35;
+    }
+
+    .check li::before {
+      content: "OK";
+      position: absolute;
+      left: 0;
+      top: 0.1em;
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .foot {
+      align-items: center;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .brand {
+      color: #dcecff;
+      font-weight: 900;
+    }
+
+    .notes {
+      display: none;
+    }
+
+    .controls {
+      position: fixed;
+      right: 22px;
+      bottom: 20px;
+      z-index: 20;
+      display: flex;
+      gap: 8px;
+    }
+
+    .controls button {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border: 1px solid rgba(168, 195, 224, 0.42);
+      border-radius: 12px;
+      background: rgba(14, 31, 53, 0.88);
+      color: #eaf7ff;
+      cursor: pointer;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.24);
+      font-weight: 900;
+    }
+
+    .controls button:hover {
+      border-color: var(--cyan);
+      color: var(--cyan);
+    }
+
+    .progress {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      z-index: 30;
+      width: 100%;
+      height: 5px;
+      background: rgba(148, 178, 210, 0.2);
+    }
+
+    .progress span {
+      display: block;
+      width: 12.5%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--azure), var(--cyan));
+      transition: width 180ms ease;
+    }
+
+    .notes-panel {
+      position: fixed;
+      z-index: 40;
+      top: 22px;
+      right: 22px;
+      bottom: 78px;
+      display: none;
+      width: min(520px, calc(100vw - 44px));
+      padding: 22px;
+      overflow: auto;
+      border: 1px solid rgba(168, 195, 224, 0.44);
+      border-radius: 22px;
+      background: rgba(248, 251, 255, 0.98);
+      color: var(--ink);
+      box-shadow: var(--shadow);
+    }
+
+    .notes-panel.open {
+      display: block;
+    }
+
+    .notes-panel h3 {
+      color: #005a9e;
+    }
+
+    .notes-panel p,
+    .notes-panel li {
+      color: #314a63;
+      font-size: 15px;
+      line-height: 1.55;
+    }
+
+    code {
+      padding: 0.1em 0.25em;
+      border-radius: 5px;
+      background: rgba(0, 120, 212, 0.12);
+      color: inherit;
+      font-family: Consolas, "Courier New", monospace;
+    }
+
+    @media (max-width: 980px) {
+      html,
+      body {
+        overflow: auto;
+      }
+
+      .slide,
+      .slide.active {
+        position: relative;
+        min-height: 100vh;
+        overflow: visible;
+      }
+
+      .two,
+      .three,
+      .grid-cards {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media print {
+      html,
+      body {
+        overflow: visible;
+        background: white;
+      }
+
+      .deck {
+        height: auto;
+      }
+
+      .slide,
+      .slide.active {
+        position: relative;
+        display: grid;
+        width: 13.333in;
+        height: 7.5in;
+        page-break-after: always;
+        break-after: page;
+      }
+
+      .controls,
+      .progress,
+      .notes-panel {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="deck" id="deck">
+    <section class="slide active" data-title="Title">
+      <header class="head">
+        <div>
+          <p class="kicker">Sentinel Security Presentation</p>
+          <h1>Azure Key Vault As The Trust Center</h1>
+        </div>
+        <span class="number">01 / 08</span>
+      </header>
+      <div class="body two">
+        <div>
+          <p class="lead">
+            Sentinel uses Key Vault to keep runtime secrets out of source code,
+            out of Kubernetes manifests, and away from human copy-paste operations.
+          </p>
+          <div class="pill-row">
+            <span class="pill">AKS Workload Identity</span>
+            <span class="pill">Managed Identity</span>
+            <span class="pill">Private Key Vault</span>
+            <span class="pill">RBAC</span>
+            <span class="pill">Blob login evidence</span>
+          </div>
+        </div>
+        <div class="diagram">
+          <svg viewBox="0 0 560 400" role="img" aria-label="Key Vault centered architecture">
+            <defs>
+              <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L8,3 z" fill="#2563eb"></path>
+              </marker>
+            </defs>
+            <rect x="174" y="108" width="210" height="160" rx="28" class="node-vault"></rect>
+            <text x="279" y="177" class="label" style="font-size:24px">Key Vault</text>
+            <text x="279" y="205" class="small">Secrets, access policies, audit path</text>
+            <rect x="35" y="38" width="142" height="72" rx="18" class="node"></rect>
+            <text x="106" y="76" class="label">Entra ID</text>
+            <rect x="384" y="38" width="142" height="72" rx="18" class="node"></rect>
+            <text x="455" y="76" class="label">AKS Pod</text>
+            <rect x="35" y="298" width="142" height="72" rx="18" class="node"></rect>
+            <text x="106" y="337" class="label">PostgreSQL</text>
+            <rect x="384" y="298" width="142" height="72" rx="18" class="node"></rect>
+            <text x="455" y="337" class="label">Blob Storage</text>
+            <path d="M176 76 C242 70 316 70 384 76" class="arrow arrow-amber"></path>
+            <path d="M455 110 C445 154 421 184 384 192" class="arrow arrow-blue"></path>
+            <path d="M177 334 C225 310 247 280 260 268" class="arrow arrow-blue"></path>
+            <path d="M384 334 C337 309 310 282 293 267" class="arrow arrow-green"></path>
+          </svg>
+        </div>
+      </div>
+      <footer class="foot">
+        <span class="brand">Core message: identity retrieves secrets, people do not handle them.</span>
+        <span>Use N for speaker notes</span>
+      </footer>
+      <div class="notes">
+        <h3>Speaker notes</h3>
+        <p>Open by positioning Key Vault as a control point, not just a password box.</p>
+        <p>For Sentinel, Key Vault protects the values that make authentication and data access possible: database URL, app client secret, signing key, encryption key, and internal service token.</p>
+        <p>The important sentence is: the application proves its identity to Azure, then Azure decides whether that workload may read a secret.</p>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Why Key Vault">
+      <header class="head">
+        <div>
+          <p class="kicker">The security problem</p>
+          <h2>Without Key Vault, secrets leak into every operational layer</h2>
+        </div>
+        <span class="number">02 / 08</span>
+      </header>
+      <div class="body two">
+        <div class="statement">
+          A secret copied into code, a manifest, a terminal history, or a chat message
+          becomes an operational liability.
+        </div>
+        <div class="grid-cards" style="grid-template-columns:1fr 1fr">
+          <article class="card mini" style="--accent:var(--red)">
+            <strong>Source code</strong>
+            <span>Hardcoded passwords and client secrets survive in Git history.</span>
+          </article>
+          <article class="card mini" style="--accent:var(--amber)">
+            <strong>Kubernetes</strong>
+            <span>Plain manifests and copied env values spread sensitive data.</span>
+          </article>
+          <article class="card mini" style="--accent:var(--blue)">
+            <strong>Operations</strong>
+            <span>Manual updates make rotation slow, risky, and inconsistent.</span>
+          </article>
+          <article class="card mini" style="--accent:var(--green)">
+            <strong>Audit</strong>
+            <span>Key Vault gives one place to review access and policy changes.</span>
+          </article>
+        </div>
+      </div>
+      <footer class="foot">
+        <span class="brand">Sentinel design choice</span>
+        <span>No source secrets. No storage keys. No Azure client secret in pods.</span>
+      </footer>
+      <div class="notes">
+        <h3>Speaker notes</h3>
+        <p>This is the business reason for Key Vault. It reduces blast radius and gives a controlled place for secret lifecycle management.</p>
+        <p>Make the distinction clear: environment variables still exist at runtime, but values are sourced through Key Vault and Kubernetes secret sync, not checked into the repo.</p>
+        <p>In the minimal setup, the risk is smaller than a full production platform, but the habit matters because the same pattern scales.</p>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Minimal Architecture">
+      <header class="head">
+        <div>
+          <p class="kicker">Current minimal deployment</p>
+          <h2>Key Vault sits beside the app, but controls what the app can know</h2>
+        </div>
+        <span class="number">03 / 08</span>
+      </header>
+      <div class="body">
+        <div class="diagram">
+          <svg viewBox="0 0 1120 560" role="img" aria-label="Sentinel minimal Azure architecture">
+            <defs>
+              <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L8,3 z" fill="#2563eb"></path>
+              </marker>
+            </defs>
+            <rect x="24" y="24" width="1072" height="512" rx="28" class="zone"></rect>
+            <text x="98" y="58" class="small" style="text-anchor:start;font-size:14px">RG-1</text>
+            <rect x="80" y="92" width="940" height="344" rx="26" class="zone-green"></rect>
+            <text x="140" y="126" class="small" style="text-anchor:start;font-size:14px">VNet with AKS subnet and private endpoint subnet</text>
+
+            <rect x="80" y="226" width="132" height="72" rx="18" class="node"></rect>
+            <text x="146" y="265" class="label">User</text>
+            <rect x="248" y="226" width="132" height="72" rx="18" class="node"></rect>
+            <text x="314" y="258" class="label">Entra ID</text>
+            <text x="314" y="278" class="small">OAuth login</text>
+            <rect x="420" y="210" width="160" height="104" rx="20" class="node-strong"></rect>
+            <text x="500" y="248" class="label">AKS</text>
+            <text x="500" y="270" class="small">web, gateway, identity</text>
+            <text x="500" y="289" class="small">workload identity</text>
+            <rect x="638" y="92" width="154" height="82" rx="20" class="node-vault"></rect>
+            <text x="715" y="126" class="label">Key Vault</text>
+            <text x="715" y="147" class="small">private endpoint</text>
+            <rect x="638" y="228" width="154" height="82" rx="20" class="node"></rect>
+            <text x="715" y="260" class="label">PostgreSQL</text>
+            <text x="715" y="281" class="small">identity data</text>
+            <rect x="638" y="364" width="154" height="82" rx="20" class="node"></rect>
+            <text x="715" y="396" class="label">Blob Storage</text>
+            <text x="715" y="417" class="small">login receipts</text>
+            <rect x="848" y="202" width="132" height="88" rx="18" class="node"></rect>
+            <text x="914" y="235" class="label">Docker Hub</text>
+            <text x="914" y="256" class="small">images</text>
+
+            <path d="M212 262 L248 262" class="arrow arrow-blue"></path>
+            <path d="M380 262 L420 262" class="arrow arrow-blue"></path>
+            <path d="M580 224 C622 174 632 146 638 133" class="arrow arrow-amber"></path>
+            <path d="M580 262 L638 269" class="arrow arrow-blue"></path>
+            <path d="M580 292 C624 344 632 383 638 405" class="arrow arrow-green"></path>
+            <path d="M848 246 C760 202 662 198 580 226" class="arrow arrow-blue"></path>
+          </svg>
+        </div>
+      </div>
+      <footer class="foot">
+        <span class="brand">Minimal setup: one RG, AKS, Key Vault, PostgreSQL, Storage Account.</span>
+        <span>The vault is private, the gateway is public HTTPS.</span>
+      </footer>
+      <div class="notes">
+        <h3>Speaker notes</h3>
+        <p>Walk left to right: user logs in, Entra ID returns tokens, gateway routes callback to identity service, identity service stores user and tenant state in PostgreSQL.</p>
+        <p>Key Vault is not in the direct browser path. It serves the workload at startup and runtime.</p>
+        <p>Blob Storage is now visible in the demo: after successful login, the identity service writes a small JSON login receipt.</p>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Vault Contents">
+      <header class="head">
+        <div>
+          <p class="kicker">What Key Vault protects</p>
+          <h2>Only sensitive runtime values belong in the vault</h2>
+        </div>
+        <span class="number">04 / 08</span>
+      </header>
+      <div class="body">
+        <div class="grid-cards">
+          <article class="card mini" style="--accent:var(--azure)">
+            <strong>postgres-runtime-url</strong>
+            <span>Database URL used by Identity Service to reach Azure PostgreSQL.</span>
+          </article>
+          <article class="card mini" style="--accent:var(--amber)">
+            <strong>identity-microsoft-client-secret</strong>
+            <span>Confidential app secret for OAuth authorization code exchange.</span>
+          </article>
+          <article class="card mini" style="--accent:var(--green)">
+            <strong>identity-session-signing-key</strong>
+            <span>Signs Sentinel session cookies after Microsoft login succeeds.</span>
+          </article>
+          <article class="card mini" style="--accent:var(--blue)">
+            <strong>identity-token-encryption-key</strong>
+            <span>Encrypts refresh tokens before storing them in PostgreSQL.</span>
+          </article>
+        </div>
+        <div class="statement">
+          ConfigMaps contain names and URLs. Key Vault contains secret values.
+        </div>
+      </div>
+      <footer class="foot">
+        <span class="brand">Presenter rule</span>
+        <span>Show secret names and versions, never reveal secret values.</span>
+      </footer>
+      <div class="notes">
+        <h3>Speaker notes</h3>
+        <p>Use the Azure Portal to show Key Vault secrets by name only. Do not click "Show Secret Value" during the presentation.</p>
+        <p>Explain the difference between non-sensitive configuration and secrets. A hostname or secret name can live in a ConfigMap. A password, client secret, signing key, encryption key, or token must not.</p>
+        <p>Also mention soft delete and purge protection as vault safety features, especially for accidental deletion.</p>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Workload Identity">
+      <header class="head">
+        <div>
+          <p class="kicker">Passwordless Azure access</p>
+          <h2>The pod reaches Key Vault without storing an Azure credential</h2>
+        </div>
+        <span class="number">05 / 08</span>
+      </header>
+      <div class="body two">
+        <div class="chain">
+          <div class="step"><span class="idx">1</span><div><strong>Kubernetes ServiceAccount</strong><span>Identity Service pod runs as a named service account.</span></div></div>
+          <div class="step"><span class="idx">2</span><div><strong>Projected OIDC token</strong><span>AKS gives the pod a short-lived federated token.</span></div></div>
+          <div class="step"><span class="idx">3</span><div><strong>Entra token exchange</strong><span>Federated credential validates issuer, subject, and audience.</span></div></div>
+          <div class="step"><span class="idx">4</span><div><strong>User-assigned managed identity</strong><span>Azure returns an access token for the UAMI.</span></div></div>
+          <div class="step"><span class="idx">5</span><div><strong>Key Vault RBAC</strong><span>Vault allows only approved secret reads.</span></div></div>
+        </div>
+        <div>
+          <div class="statement">
+            The application authenticates as a workload, not as a copied client secret.
+          </div>
+          <br>
+          <div class="terminal">ServiceAccount annotation:
+azure.workload.identity/client-id = UAMI client ID
+
+Pod label:
+azure.workload.identity/use = true
+
+SDK:
+DefaultAzureCredential()</div>
+        </div>
+      </div>
+      <footer class="foot">
+        <span class="brand">Federation replaces a long-lived Azure client secret.</span>
+        <span>RBAC still decides what the identity can read.</span>
+      </footer>
+      <div class="notes">
+        <h3>Speaker notes</h3>
+        <p>This is the most important technical slide. Slow down here.</p>
+        <p>The service account is the Kubernetes identity. The user-assigned managed identity is the Azure identity. The federated credential connects the two.</p>
+        <p>If the namespace, service account name, issuer, or audience is wrong, Key Vault access fails before the app starts.</p>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Login Flow">
+      <header class="head">
+        <div>
+          <p class="kicker">Runtime flow</p>
+          <h2>Login proves the full chain: OAuth, secrets, database, and blob evidence</h2>
+        </div>
+        <span class="number">06 / 08</span>
+      </header>
+      <div class="body">
+        <div class="diagram">
+          <svg viewBox="0 0 1120 470" role="img" aria-label="Login flow through Key Vault and storage">
+            <defs>
+              <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L8,3 z" fill="#2563eb"></path>
+              </marker>
+            </defs>
+            <rect x="40" y="190" width="120" height="72" rx="18" class="node"></rect>
+            <text x="100" y="230" class="label">Browser</text>
+            <rect x="205" y="190" width="135" height="72" rx="18" class="node"></rect>
+            <text x="273" y="222" class="label">Gateway</text>
+            <text x="273" y="242" class="small">HTTPS</text>
+            <rect x="390" y="166" width="150" height="120" rx="20" class="node-strong"></rect>
+            <text x="465" y="212" class="label">Identity</text>
+            <text x="465" y="234" class="small">OAuth callback</text>
+            <rect x="610" y="50" width="150" height="80" rx="20" class="node-vault"></rect>
+            <text x="685" y="84" class="label">Key Vault</text>
+            <text x="685" y="105" class="small">runtime secrets</text>
+            <rect x="610" y="195" width="150" height="80" rx="20" class="node"></rect>
+            <text x="685" y="229" class="label">PostgreSQL</text>
+            <text x="685" y="250" class="small">tenant + user</text>
+            <rect x="610" y="335" width="150" height="80" rx="20" class="node"></rect>
+            <text x="685" y="369" class="label">Blob</text>
+            <text x="685" y="390" class="small">login JSON</text>
+            <rect x="830" y="190" width="150" height="80" rx="20" class="node"></rect>
+            <text x="905" y="224" class="label">Entra ID</text>
+            <text x="905" y="245" class="small">auth code</text>
+            <path d="M160 226 L205 226" class="arrow arrow-blue"></path>
+            <path d="M340 226 L390 226" class="arrow arrow-blue"></path>
+            <path d="M540 210 C652 145 742 143 830 213" class="arrow arrow-blue"></path>
+            <path d="M610 92 C560 108 528 137 499 166" class="arrow arrow-amber"></path>
+            <path d="M540 235 L610 235" class="arrow arrow-blue"></path>
+            <path d="M540 260 C584 306 600 342 610 375" class="arrow arrow-green"></path>
+          </svg>
+        </div>
+        <div class="three">
+          <article class="card dark">
+            <h3>1. User signs in</h3>
+            <p>Microsoft validates the user and returns the authorization code.</p>
+          </article>
+          <article class="card dark">
+            <h3>2. Identity commits state</h3>
+            <p>Sentinel resolves tenant/user, encrypts refresh token, and writes PostgreSQL records.</p>
+          </article>
+          <article class="card dark">
+            <h3>3. Blob receipt appears</h3>
+            <p>A JSON receipt is written to the Storage Account as visible proof of success.</p>
+          </article>
+        </div>
+      </div>
+      <footer class="foot">
+        <span class="brand">The blob is evidence, not the source of truth.</span>
+        <span>Source of truth remains PostgreSQL.</span>
+      </footer>
+      <div class="notes">
+        <h3>Speaker notes</h3>
+        <p>Explain the blob addition clearly: it exists to make the Storage Account meaningful in the minimal demo and to visibly prove that login completed.</p>
+        <p>The blob does not store tokens, secrets, or emails. It stores IDs, event type, timestamp, account type, and correlation ID.</p>
+        <p>The login blob write is intentionally non-blocking. If Blob Storage is temporarily unavailable, the user should still be able to log in.</p>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Controls">
+      <header class="head">
+        <div>
+          <p class="kicker">Security controls</p>
+          <h2>Key Vault works because identity, RBAC, network, and operations line up</h2>
+        </div>
+        <span class="number">07 / 08</span>
+      </header>
+      <div class="body two">
+        <div>
+          <ul class="check">
+            <li>Managed identity receives least-privilege Key Vault access.</li>
+            <li>Private endpoint keeps the vault off the open public path.</li>
+            <li>Secrets Store CSI syncs selected values into runtime-only Kubernetes secrets.</li>
+            <li>Session keys and encryption keys are rotated from Key Vault, not source code.</li>
+            <li>Storage Blob Data Contributor is scoped to the managed identity.</li>
+          </ul>
+        </div>
+        <div class="grid-cards" style="grid-template-columns:1fr">
+          <article class="card mini" style="--accent:var(--red)">
+            <strong>403 Forbidden</strong>
+            <span>Usually RBAC, wrong UAMI, or Key Vault networking.</span>
+          </article>
+          <article class="card mini" style="--accent:var(--amber)">
+            <strong>Token exchange failure</strong>
+            <span>Federated credential issuer, subject, or audience mismatch.</span>
+          </article>
+          <article class="card mini" style="--accent:var(--blue)">
+            <strong>Secret not created</strong>
+            <span>CSI driver cannot sync until it can mount objects from Key Vault.</span>
+          </article>
+        </div>
+      </div>
+      <footer class="foot">
+        <span class="brand">Key Vault is one control plane. The deployment has to prove the whole chain.</span>
+        <span>Debug in layers.</span>
+      </footer>
+      <div class="notes">
+        <h3>Speaker notes</h3>
+        <p>This slide helps you answer troubleshooting questions.</p>
+        <p>For Key Vault failures, debug in this order: pod label, service account annotation, federated credential, UAMI, RBAC role, private endpoint/DNS, secret name, secret enabled state.</p>
+        <p>For Blob Storage, the equivalent check is Storage Blob Data Contributor on the UAMI and network access from AKS.</p>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Demo Script">
+      <header class="head">
+        <div>
+          <p class="kicker">How to present it</p>
+          <h2>Demo path: show control, then prove behavior</h2>
+        </div>
+        <span class="number">08 / 08</span>
+      </header>
+      <div class="body two">
+        <div class="chain">
+          <div class="step"><span class="idx">1</span><div><strong>Key Vault</strong><span>Show secrets by name, versions, RBAC, private networking.</span></div></div>
+          <div class="step"><span class="idx">2</span><div><strong>Managed identity</strong><span>Show role assignments for Key Vault and Blob Storage.</span></div></div>
+          <div class="step"><span class="idx">3</span><div><strong>AKS</strong><span>Show service account, pod label, and running pods.</span></div></div>
+          <div class="step"><span class="idx">4</span><div><strong>Login</strong><span>Use a fresh browser session and complete Microsoft login.</span></div></div>
+          <div class="step"><span class="idx">5</span><div><strong>Evidence</strong><span>Open Blob container and show the new login receipt.</span></div></div>
+        </div>
+        <div>
+          <div class="terminal">kubectl get pods -n sentinel-app
+kubectl logs deployment/identity-service -n sentinel-app --tail=100
+
+Expected log:
+login_blob_written
+
+Portal:
+Storage Account > Containers
+sentinel-login-events > login-events</div>
+          <br>
+          <div class="statement">
+            Closing line: Sentinel does not just hide secrets. It proves which workload can use them, through which path, and for what purpose.
+          </div>
+        </div>
+      </div>
+      <footer class="foot">
+        <span class="brand">Do not show secret values during the demo.</span>
+        <span>Keep one screenshot ready as fallback.</span>
+      </footer>
+      <div class="notes">
+        <h3>Speaker notes</h3>
+        <p>Keep the live demo simple. Start with the vault, then identity, then AKS, then login, then blob evidence.</p>
+        <p>If login fails during the live demo, use logs and explain that this architecture is designed to fail closed when identity, RBAC, or network rules are wrong.</p>
+        <p>End by tying Key Vault to the broader Sentinel platform: the same pattern will protect future microservice secrets, operation tokens, webhook secrets, and AI integration keys later.</p>
+      </div>
+    </section>
+  </main>
+
+  <aside class="notes-panel" id="notesPanel" aria-live="polite"></aside>
+
+  <div class="controls" aria-label="Presentation controls">
+    <button id="prev" type="button" title="Previous slide">‹</button>
+    <button id="notesToggle" type="button" title="Toggle speaker notes">N</button>
+    <button id="fullscreen" type="button" title="Fullscreen">F</button>
+    <button id="next" type="button" title="Next slide">›</button>
+  </div>
+
+  <div class="progress" aria-hidden="true"><span id="progressBar"></span></div>
+
+  <script>
+    const slides = Array.from(document.querySelectorAll(".slide"));
+    const progressBar = document.getElementById("progressBar");
+    const notesPanel = document.getElementById("notesPanel");
+    let current = Math.max(0, Math.min(slides.length - 1, Number(location.hash.slice(1)) - 1 || 0));
+
+    function render() {
+      slides.forEach((slide, index) => slide.classList.toggle("active", index === current));
+      progressBar.style.width = `${((current + 1) / slides.length) * 100}%`;
+      location.hash = String(current + 1);
+      const notes = slides[current].querySelector(".notes");
+      notesPanel.innerHTML = notes ? notes.innerHTML : "<p>No notes for this slide.</p>";
+      document.title = `${current + 1}/${slides.length} - ${slides[current].dataset.title}`;
+    }
+
+    function move(delta) {
+      current = Math.max(0, Math.min(slides.length - 1, current + delta));
+      render();
+    }
+
+    function toggleNotes() {
+      notesPanel.classList.toggle("open");
+    }
+
+    async function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    }
+
+    document.getElementById("prev").addEventListener("click", () => move(-1));
+    document.getElementById("next").addEventListener("click", () => move(1));
+    document.getElementById("notesToggle").addEventListener("click", toggleNotes);
+    document.getElementById("fullscreen").addEventListener("click", toggleFullscreen);
+
+    document.addEventListener("keydown", (event) => {
+      if (["ArrowRight", "PageDown", " "].includes(event.key)) {
+        event.preventDefault();
+        move(1);
+      } else if (["ArrowLeft", "PageUp"].includes(event.key)) {
+        event.preventDefault();
+        move(-1);
+      } else if (event.key.toLowerCase() === "n") {
+        toggleNotes();
+      } else if (event.key.toLowerCase() === "f") {
+        toggleFullscreen();
+      } else if (event.key === "Home") {
+        current = 0;
+        render();
+      } else if (event.key === "End") {
+        current = slides.length - 1;
+        render();
+      } else if (event.key === "Escape") {
+        notesPanel.classList.remove("open");
+      }
+    });
+
+    window.addEventListener("hashchange", () => {
+      const requested = Number(location.hash.slice(1)) - 1;
+      if (Number.isInteger(requested) && requested >= 0 && requested < slides.length) {
+        current = requested;
+        render();
+      }
+    });
+
+    render();
+  </script>
+</body>
+</html>
