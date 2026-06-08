@@ -18,6 +18,8 @@ spec:
       serviceAccountName: inventory-worker
       securityContext:
         runAsNonRoot: true
+        runAsUser: 102
+        runAsGroup: 102
         seccompProfile: {type: RuntimeDefault}
       containers:
         - name: inventory-worker
@@ -72,6 +74,8 @@ spec:
       serviceAccountName: outbox-relay
       securityContext:
         runAsNonRoot: true
+        runAsUser: 102
+        runAsGroup: 102
         seccompProfile: {type: RuntimeDefault}
       topologySpreadConstraints:
         - maxSkew: 1
