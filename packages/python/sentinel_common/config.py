@@ -45,6 +45,13 @@ class Settings(BaseSettings):
     login_blob_account_url: AnyHttpUrl | None = None
     login_blob_container_name: str = "sentinel-login-events"
 
+    @field_validator("login_blob_account_url", mode="before")
+    @classmethod
+    def empty_url_is_none(cls, value: object) -> object:
+        if isinstance(value, str) and not value.strip():
+            return None
+        return value
+
     @field_validator("allowed_tenants", "cors_origins", mode="before")
     @classmethod
     def split_csv(cls, value: object) -> object:
