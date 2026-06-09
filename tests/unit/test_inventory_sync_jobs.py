@@ -2,6 +2,7 @@ from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
 import pytest
+from sentinel_inventory.azure import INVENTORY_QUERY
 from sentinel_inventory.models import Resource
 from sentinel_inventory.repository import InventoryRepository
 from sqlalchemy.dialects.postgresql import ENUM
@@ -44,3 +45,12 @@ def test_resource_state_uses_existing_postgresql_enum() -> None:
     assert state_type.name == "resource_state"
     assert state_type.schema == "inventory"
     assert state_type.create_type is False
+
+
+def test_inventory_query_collects_all_resources_and_resource_groups() -> None:
+    normalized_query = " ".join(INVENTORY_QUERY.lower().split())
+
+    assert "resources | project" in normalized_query
+    assert "where tolower(type) in" not in normalized_query
+    assert "resourcecontainers" in normalized_query
+    assert "microsoft.resources/subscriptions/resourcegroups" in normalized_query

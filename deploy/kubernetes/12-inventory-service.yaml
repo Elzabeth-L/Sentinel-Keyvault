@@ -45,7 +45,7 @@ spec:
               app.kubernetes.io/name: inventory-service
       containers:
         - name: inventory-service
-          image: elzabeth03/sentinel-inventory-service:v1.0.4
+          image: elzabeth03/sentinel-inventory-service:v1.0.5
           imagePullPolicy: IfNotPresent
           ports:
             - name: http

@@ -13,17 +13,17 @@ from azure.mgmt.resourcegraph.models import QueryRequest, QueryRequestOptions
 
 from sentinel_common.config import Settings
 
-SUPPORTED_TYPES = (
-    "microsoft.containerservice/managedclusters",
-    "microsoft.keyvault/vaults",
-    "microsoft.storage/storageaccounts",
-    "microsoft.network/virtualnetworks",
-    "microsoft.network/applicationgateways",
-    "microsoft.network/loadbalancers",
-    "microsoft.web/sites",
-    "microsoft.managedidentity/userassignedidentities",
-    "microsoft.resources/subscriptions/resourcegroups",
-)
+INVENTORY_QUERY = """
+    Resources
+    | project id, name, type, subscriptionId, resourceGroup, location,
+              kind, sku, tags, properties
+    | union (
+        ResourceContainers
+        | where type =~ 'microsoft.resources/subscriptions/resourcegroups'
+        | project id, name, type, subscriptionId, resourceGroup, location,
+                  kind, sku, tags, properties
+    )
+"""
 
 
 @dataclass(frozen=True, slots=True)
@@ -110,13 +110,6 @@ class ResourceGraphInventoryProvider:
             await client.close()
 
     async def query_resources(self, subscription_ids: list[UUID]) -> list[dict[str, object]]:
-        quoted_types = ", ".join(f"'{item}'" for item in SUPPORTED_TYPES)
-        query = f"""
-            Resources
-            | where tolower(type) in ({quoted_types})
-            | project id, name, type, subscriptionId, resourceGroup, location,
-                      kind, sku, tags, properties
-        """
         client = ResourceGraphClient(self._credential)
         try:
             rows: list[dict[str, object]] = []
@@ -124,7 +117,7 @@ class ResourceGraphInventoryProvider:
             while True:
                 request = QueryRequest(
                     subscriptions=[str(item) for item in subscription_ids],
-                    query=query,
+                    query=INVENTORY_QUERY,
                     options=QueryRequestOptions(
                         result_format="objectArray",
                         top=1000,

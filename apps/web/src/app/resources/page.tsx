@@ -19,15 +19,22 @@ type Subscription = {
   azure_subscription_id: string;
   display_name: string;
   state: string;
+  last_sync_at?: string;
 };
 
 export default function ResourcesPage() {
   const [search, setSearch] = useState("");
+  const [selectedSubscriptionId, setSelectedSubscriptionId] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const query = useQuery({
-    queryKey: ["resources", search],
-    queryFn: () =>
-      api<ResourcePage>(`/inventory/resources?limit=200&search=${encodeURIComponent(search)}`)
+    queryKey: ["resources", selectedSubscriptionId, search],
+    queryFn: () => {
+      const parameters = new URLSearchParams({limit: "200", search});
+      if (selectedSubscriptionId) {
+        parameters.set("subscription_id", selectedSubscriptionId);
+      }
+      return api<ResourcePage>(`/inventory/resources?${parameters.toString()}`);
+    }
   });
   const subscriptions = useQuery({
     queryKey: ["subscriptions"],
@@ -51,6 +58,10 @@ export default function ResourcesPage() {
         })
       })
   });
+  const operationError = discover.error ?? synchronize.error ?? subscriptions.error ?? query.error;
+  const selectedSubscription = subscriptions.data?.find(
+    (subscription) => subscription.id === selectedSubscriptionId
+  );
   return (
     <div>
       <h1 className="text-3xl font-semibold">Resource Explorer</h1>
@@ -69,14 +80,99 @@ export default function ResourcesPage() {
           {subscriptions.data?.length ?? 0} subscriptions registered
         </span>
       </div>
+      {operationError ? (
+        <p className="mt-3 text-sm text-red-400">
+          {operationError instanceof Error ? operationError.message : "Azure inventory request failed"}
+        </p>
+      ) : null}
+      <div className="panel mt-5 overflow-hidden">
+        <div className="border-b border-border px-5 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold">Azure subscriptions</h2>
+              <p className="mt-1 text-sm text-muted">
+                Select a subscription to filter the resource inventory.
+              </p>
+            </div>
+            <Button
+              variant={selectedSubscriptionId === null ? "primary" : "secondary"}
+              onClick={() => setSelectedSubscriptionId(null)}
+            >
+              All subscriptions
+            </Button>
+          </div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[760px] text-left text-sm">
+            <thead className="text-muted">
+              <tr>
+                {["Name", "Subscription ID", "State", "Last inventory sync"].map((item) => (
+                  <th className="border-b border-border px-5 py-3 font-medium" key={item}>
+                    {item}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {subscriptions.data?.map((subscription) => (
+                <tr
+                  className={`cursor-pointer border-b border-border/60 transition hover:bg-slate-800/50 ${
+                    selectedSubscriptionId === subscription.id
+                      ? "bg-sky-500/10 ring-1 ring-inset ring-primary/50"
+                      : ""
+                  }`}
+                  key={subscription.id}
+                  onClick={() => setSelectedSubscriptionId(subscription.id)}
+                >
+                  <td className="px-5 py-3 font-medium">
+                    <button
+                      className="text-left hover:text-primary"
+                      onClick={() => setSelectedSubscriptionId(subscription.id)}
+                      type="button"
+                    >
+                      {subscription.display_name}
+                    </button>
+                  </td>
+                  <td className="px-5 py-3 font-mono text-xs text-muted">
+                    {subscription.azure_subscription_id}
+                  </td>
+                  <td className="px-5 py-3 text-success">{subscription.state}</td>
+                  <td className="px-5 py-3 text-muted">
+                    {subscription.last_sync_at
+                      ? new Date(subscription.last_sync_at).toLocaleString()
+                      : "Not synchronized"}
+                  </td>
+                </tr>
+              ))}
+              {!subscriptions.isLoading && !subscriptions.data?.length ? (
+                <tr>
+                  <td className="px-5 py-5 text-muted" colSpan={4}>
+                    No subscriptions discovered yet.
+                  </td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
+      </div>
       <div className="panel mt-5 overflow-hidden">
         <div className="border-b border-border p-4">
-          <input
-            className="w-full max-w-md rounded-lg border border-border bg-slate-950/70 px-3 py-2 outline-none focus:border-primary"
-            placeholder="Search name or Azure resource ID"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-          />
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="font-semibold">
+                {selectedSubscription?.display_name ?? "All subscription resources"}
+              </h2>
+              <p className="mt-1 text-sm text-muted">
+                {query.data?.items.length ?? 0} resources shown
+              </p>
+            </div>
+            <input
+              className="w-full max-w-md rounded-lg border border-border bg-slate-950/70 px-3 py-2 outline-none focus:border-primary"
+              placeholder="Search name or Azure resource ID"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+            />
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[800px] text-left text-sm">

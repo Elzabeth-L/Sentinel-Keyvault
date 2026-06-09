@@ -116,8 +116,15 @@ Implemented behavior:
   Malformed jobs now fail cleanly.
 - `inventory.resources.state` maps explicitly to the existing PostgreSQL
   `inventory.resource_state` enum. Mapping it as `VARCHAR` caused asyncpg insert
-  failures after Resource Graph returned data. The corrected inventory image tag
-  is `v1.0.4`.
+  failures after Resource Graph returned data.
+- Inventory no longer restricts Azure Resource Graph results to a short resource
+  type allowlist. It imports all rows from `Resources` and resource groups from
+  `ResourceContainers`. The corrected inventory image tag is `v1.0.5`.
+- Resource Explorer renders discovered subscriptions with display name, Azure
+  subscription ID, state, and last sync time, and surfaces inventory request
+  errors. Selecting a subscription filters the resource API by the internal
+  subscription record ID; an All subscriptions control restores the combined
+  view. The corrected web image tag is `v1.0.5`.
 - organizational and personal Microsoft accounts are accepted through `/common`
 - organizational workspaces are isolated by Entra `tid`
 - shared-consumer identities are isolated by `(tid, oid)` in single-user workspaces
