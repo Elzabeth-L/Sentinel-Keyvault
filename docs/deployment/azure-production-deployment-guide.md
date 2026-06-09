@@ -36,7 +36,6 @@ Azure resources in one resource group:
   stsentinel<unique>
   id-sentinel-app
   app-sentinel-auth
-  vm-docker-build
 ```
 
 ## Important Reality Check About Public IP Login
@@ -83,7 +82,7 @@ Keep names casual and simple:
 | Key Vault | `kv-sentinel-<unique>` |
 | Managed identity | `id-sentinel-app` |
 | Entra app registration | `app-sentinel-auth` |
-| Docker build VM | `vm-docker-build` |
+| Optional Docker build VM | `vm-docker-build` |
 | Docker Hub namespace | your Docker Hub username |
 | Image tag | `v1` or any tag you choose |
 
@@ -218,9 +217,8 @@ assessments, and audit/activity records in PostgreSQL.
    - Firewall rule name: `my-laptop`.
    - Start IP address: your current public IP shown by the Portal.
    - End IP address: same as your current public IP.
-   - Later, add a rule for the Docker VM public IP before running migrations.
-   - Later, add a rule for the AKS outbound public IP before the pods connect to
-     PostgreSQL.
+   - Add a rule for the AKS effective outbound public IP before the migration Job or
+     application pods connect to PostgreSQL.
 5. Security:
    - Require secure transport: `Enabled`.
 6. Backup:
@@ -264,17 +262,16 @@ Firewall rules you should end up with:
 | Rule name | Start IP | End IP | When |
 | --- | --- | --- | --- |
 | `my-laptop` | your current public IP | same IP | During PostgreSQL creation |
-| `docker-vm` | Docker VM public IP | same IP | Before running migration |
-| `aks-outbound` | AKS outbound public IP | same IP | Before deploying app pods |
+| `aks-outbound` | AKS effective outbound public IP | same IP | Before migration Job and app pods |
 
 Keep `Allow public access from any Azure service within Azure` unchecked unless you are
 temporarily debugging connectivity and cannot identify the exact AKS outbound IP.
 
 ## 5. Create Storage Account Blob Storage
 
-Blob storage is not required for the first API calls, but it is part of Sentinel's
-platform for future exports, reports, inventory snapshots, and operation artifacts.
-Use one normal storage account for now.
+Blob storage records a non-sensitive JSON receipt after each successful login. It also
+provides the future location for exports, reports, inventory snapshots, and operation
+artifacts. Use one normal storage account for now.
 
 1. Search for `Storage accounts`.
 2. Select `Create`.
@@ -314,11 +311,12 @@ inventory-snapshots
 change-reports
 operation-artifacts
 exports
+sentinel-login-events
 ```
 
 This keeps the storage account from being open to the whole internet. It is still a
-public endpoint, but only selected IPs/networks can access it. Later, add the Docker VM
-public IP and AKS outbound public IP if those workloads need direct blob access.
+public endpoint, but only selected IPs/networks can access it. Add the AKS outbound
+public IP because Identity Service writes login receipts through managed identity.
 
 Private endpoints are better for a hardened setup, but they are not worth adding right
 now unless you are ready to manage private DNS and subnet access. Skipping private
@@ -361,22 +359,14 @@ Key Vault is required because secrets should not be in source code or Kubernetes
 Create these secrets:
 
 ```text
-identity-database-url
+postgres-runtime-url
 identity-microsoft-client-secret
-identity-session-secret
+identity-session-signing-key
 identity-token-encryption-key
-inventory-database-url
-relationship-database-url
-intelligence-database-url
-operations-database-url
-audit-database-url
-internal-service-token
+internal-api-token
 ```
 
-For this simple setup, all `*-database-url` secrets can use the same PostgreSQL
-connection string.
-
-Generate `identity-session-secret` and `internal-service-token` as long random strings.
+Generate `identity-session-signing-key` and `internal-api-token` as long random strings.
 Generate `identity-token-encryption-key` as a Fernet key if the code expects one.
 
 Because public network access is disabled, your laptop may not be able to read or
@@ -486,9 +476,10 @@ For each service account, add a federated credential to `id-sentinel-app`.
 
 Repeat for all service accounts above.
 
-## 10. Create Docker Build VM
+## 10. Optional Docker Build VM
 
-Use this VM only to build and push Docker images if your laptop is not set up.
+Create this VM only if your laptop or CI runner cannot build and push Docker images.
+It is not required for database migrations.
 
 1. Search for `Virtual machines`.
 2. Select `Create`.
@@ -531,7 +522,8 @@ Log out and back in, then clone/copy the Sentinel repo to the VM.
 
 ## 11. Build And Push Docker Images
 
-Run these commands from the repository root on the Docker VM.
+Run these commands from the repository root on any Docker-capable machine: your
+laptop, the optional build VM, or a CI runner.
 
 ```bash
 docker login
@@ -570,21 +562,34 @@ gateway, get the public IP, then rebuild and push only `sentinel-web`.
 Migration just means: create/update the PostgreSQL tables the application needs. It is
 not an extra Azure service.
 
-Run this once from the Docker VM after PostgreSQL is reachable:
+Run the migration image inside AKS through
+`deploy/kubernetes/04-database-migration-job.yaml`. The Job uses the
+`identity-service` ServiceAccount and Key Vault CSI mount, so it obtains the database
+URL without placing the password in shell history.
+
+Run this after `00-namespaces.yaml`, `02-service-accounts.yaml`, and
+`03-secret-provider-classes.yaml` have been applied. The complete clean-cluster order
+is shown in Step 14.
 
 ```bash
-DOCKERHUB="your-dockerhub-username"
-TAG="v1"
-DATABASE_URL='postgresql+asyncpg://sentinel_admin:<PASSWORD>@psql-sentinel-<unique>.postgres.database.azure.com:5432/sentinel?ssl=require'
+kubectl delete job sentinel-database-migration \
+  -n sentinel-app \
+  --ignore-not-found
 
-docker run --rm \
-  -e SENTINEL_DATABASE_URL="$DATABASE_URL" \
-  $DOCKERHUB/sentinel-migration:$TAG
+kubectl apply -f deploy/kubernetes/04-database-migration-job.yaml
+
+kubectl wait \
+  --for=condition=complete \
+  job/sentinel-database-migration \
+  -n sentinel-app \
+  --timeout=180s
+
+kubectl logs job/sentinel-database-migration -n sentinel-app
 ```
 
-Keep this migration image because it is the cleanest way to apply database schema
-changes. The Kubernetes migration Job was removed for now to keep the AKS deployment
-simple.
+Run this for a new database and whenever a release adds an Alembic migration.
+Completed Jobs do not rerun when applied again, so delete the previous Job first.
+Deploy or restart Identity Service only after the Job reports `Complete`.
 
 ## 13. Update Kubernetes Placeholders
 
@@ -630,6 +635,10 @@ kubectl apply -f deploy/kubernetes/00-namespaces.yaml
 kubectl apply -f deploy/kubernetes/01-config.yaml
 kubectl apply -f deploy/kubernetes/02-service-accounts.yaml
 kubectl apply -f deploy/kubernetes/03-secret-provider-classes.yaml
+kubectl delete job sentinel-database-migration -n sentinel-app --ignore-not-found
+kubectl apply -f deploy/kubernetes/04-database-migration-job.yaml
+kubectl wait --for=condition=complete job/sentinel-database-migration -n sentinel-app --timeout=180s
+kubectl logs job/sentinel-database-migration -n sentinel-app
 kubectl apply -f deploy/kubernetes/04-resource-governance.yaml
 kubectl apply -f deploy/kubernetes/10-web.yaml
 kubectl apply -f deploy/kubernetes/11-identity-service.yaml
@@ -802,13 +811,15 @@ After the gateway public IP exists, rebuild only `sentinel-web`.
 Still run the migration once. Even a tiny demo needs the database tables.
 
 ```bash
-DOCKERHUB="your-dockerhub-username"
-TAG="v1"
-DATABASE_URL='postgresql+asyncpg://sentinel_admin:<PASSWORD>@psql-sentinel-<unique>.postgres.database.azure.com:5432/sentinel?ssl=require'
+kubectl delete job sentinel-database-migration \
+  -n sentinel-app \
+  --ignore-not-found
 
-docker run --rm \
-  -e SENTINEL_DATABASE_URL="$DATABASE_URL" \
-  $DOCKERHUB/sentinel-migration:$TAG
+kubectl apply -f kubernetes/04-database-migration-job.yaml
+kubectl wait --for=condition=complete job/sentinel-database-migration \
+  -n sentinel-app \
+  --timeout=180s
+kubectl logs job/sentinel-database-migration -n sentinel-app
 ```
 
 ### Demo Step 13: Replace Placeholders
@@ -822,6 +833,7 @@ Required:
 01-config.yaml
 02-service-accounts.yaml
 03-secret-provider-classes.yaml
+04-database-migration-job.yaml
 04-resource-governance.yaml
 10-web.yaml
 11-identity-service.yaml
@@ -834,12 +846,11 @@ Required:
 You still need Key Vault secrets for:
 
 ```text
-identity-database-url
+postgres-runtime-url
 identity-microsoft-client-secret
-identity-session-secret
+identity-session-signing-key
 identity-token-encryption-key
-inventory-database-url
-internal-service-token
+internal-api-token
 ```
 
 ### Demo Step 14: Apply Minimal Runtime
@@ -851,6 +862,10 @@ kubectl apply -f deploy/kubernetes/00-namespaces.yaml
 kubectl apply -f deploy/kubernetes/01-config.yaml
 kubectl apply -f deploy/kubernetes/02-service-accounts.yaml
 kubectl apply -f deploy/kubernetes/03-secret-provider-classes.yaml
+kubectl delete job sentinel-database-migration -n sentinel-app --ignore-not-found
+kubectl apply -f deploy/kubernetes/04-database-migration-job.yaml
+kubectl wait --for=condition=complete job/sentinel-database-migration -n sentinel-app --timeout=180s
+kubectl logs job/sentinel-database-migration -n sentinel-app
 kubectl apply -f deploy/kubernetes/04-resource-governance.yaml
 ```
 
@@ -1003,21 +1018,24 @@ For each federated credential:
 9. Audience: `api://AzureADTokenExchange`.
 10. Save.
 
-### Minimal Step 10: Docker Build VM
+### Minimal Step 10: Optional Docker Build VM
 
-Create the Docker VM the same way as the normal guide.
+Create the Docker VM only if you do not already have a Docker-capable workstation or
+CI runner.
 
-You still need the VM for:
+You need some Docker-capable environment for:
 
 ```text
 building images
 pushing images to Docker Hub
-running the database migration command
 ```
+
+The database migration itself runs inside AKS.
 
 ### Minimal Step 11: Build And Push Images
 
-Run these commands from the repository root on the Docker VM:
+Run these commands from the repository root on your Docker-capable workstation,
+optional build VM, or CI runner:
 
 ```bash
 docker login
@@ -1051,13 +1069,19 @@ If the DNS name is not ready yet, use this order:
 Run migration once. This is still required because PostgreSQL starts empty.
 
 ```bash
-DOCKERHUB="your-dockerhub-username"
-TAG="v1"
-DATABASE_URL='postgresql+asyncpg://sentinel_admin:<PASSWORD>@psql-sentinel-<unique>.postgres.database.azure.com:5432/sentinel?ssl=require'
+kubectl delete job sentinel-database-migration \
+  -n sentinel-app \
+  --ignore-not-found
 
-docker run --rm \
-  -e SENTINEL_DATABASE_URL="$DATABASE_URL" \
-  $DOCKERHUB/sentinel-migration:$TAG
+kubectl apply -f kubernetes/04-database-migration-job.yaml
+
+kubectl wait \
+  --for=condition=complete \
+  job/sentinel-database-migration \
+  -n sentinel-app \
+  --timeout=180s
+
+kubectl logs job/sentinel-database-migration -n sentinel-app
 ```
 
 ### Minimal Step 13: Replace Placeholders
@@ -1069,6 +1093,7 @@ deploy/kubernetes/00-namespaces.yaml
 deploy/kubernetes/01-config.yaml
 deploy/kubernetes/02-service-accounts.yaml
 deploy/kubernetes/03-secret-provider-classes.yaml
+deploy/kubernetes/04-database-migration-job.yaml
 deploy/kubernetes/04-resource-governance.yaml
 deploy/kubernetes/10-web.yaml
 deploy/kubernetes/11-identity-service.yaml
@@ -1095,6 +1120,10 @@ kubectl apply -f deploy/kubernetes/00-namespaces.yaml
 kubectl apply -f deploy/kubernetes/01-config.yaml
 kubectl apply -f deploy/kubernetes/02-service-accounts.yaml
 kubectl apply -f deploy/kubernetes/03-secret-provider-classes.yaml
+kubectl delete job sentinel-database-migration -n sentinel-app --ignore-not-found
+kubectl apply -f deploy/kubernetes/04-database-migration-job.yaml
+kubectl wait --for=condition=complete job/sentinel-database-migration -n sentinel-app --timeout=180s
+kubectl logs job/sentinel-database-migration -n sentinel-app
 kubectl apply -f deploy/kubernetes/04-resource-governance.yaml
 ```
 

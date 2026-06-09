@@ -50,12 +50,15 @@ Push these images to Docker Hub:
 <dockerhub>/sentinel-audit-service:<tag>
 ```
 
-The migration image is not deployed to AKS now. Build it on the Docker VM and run it
-once to create/update PostgreSQL tables:
+Build and push the migration image with the application images:
 
 ```text
 <dockerhub>/sentinel-migration:<tag>
 ```
+
+`04-database-migration-job.yaml` runs this image inside AKS. It mounts the same Key
+Vault `SecretProviderClass` as Identity Service, reads the synchronized database URL,
+applies Alembic migrations, and exits. A Docker VM is not required for migrations.
 
 Build the web image with the public API URL baked in:
 
@@ -73,6 +76,10 @@ kubectl apply -f deploy/kubernetes/00-namespaces.yaml
 kubectl apply -f deploy/kubernetes/01-config.yaml
 kubectl apply -f deploy/kubernetes/02-service-accounts.yaml
 kubectl apply -f deploy/kubernetes/03-secret-provider-classes.yaml
+kubectl delete job sentinel-database-migration -n sentinel-app --ignore-not-found
+kubectl apply -f deploy/kubernetes/04-database-migration-job.yaml
+kubectl wait --for=condition=complete job/sentinel-database-migration -n sentinel-app --timeout=180s
+kubectl logs job/sentinel-database-migration -n sentinel-app
 kubectl apply -f deploy/kubernetes/04-resource-governance.yaml
 kubectl apply -f deploy/kubernetes/10-web.yaml
 kubectl apply -f deploy/kubernetes/11-identity-service.yaml
@@ -85,6 +92,10 @@ kubectl apply -f deploy/kubernetes/20-workers.yaml
 kubectl apply -f deploy/kubernetes/40-network-policies.yaml
 kubectl apply -f deploy/kubernetes/50-gateway-loadbalancer.yaml
 ```
+
+Kubernetes Jobs are immutable and completed Jobs are not rerun by `kubectl apply`.
+Delete the previous `sentinel-database-migration` Job before applying it for a new
+schema release.
 
 Get the public IP:
 

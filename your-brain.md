@@ -174,8 +174,11 @@ workers, default-deny NetworkPolicies, explicit allow rules, and an in-cluster N
 gateway exposed by a Kubernetes `LoadBalancer` Service.
 
 All environment-specific values are marked `REPLACE_ME_*`. A dedicated
-`apps/migration/Dockerfile` packages Alembic migrations. The migration image is run
-from the Docker build VM for now instead of being deployed as a Kubernetes Job.
+`apps/migration/Dockerfile` packages Alembic migrations.
+`deploy/kubernetes/04-database-migration-job.yaml` runs that image as a short-lived
+AKS Job. The Job uses the `identity-service` ServiceAccount, Workload Identity, and
+Key Vault CSI mount to obtain `postgres-runtime-url`, then applies Alembic migrations
+before Identity Service rollout. It is deleted and recreated for each schema release.
 Container CI builds web, all services, and migration; a Kubernetes workflow parses
 manifests and validates cross-resource references.
 
@@ -378,9 +381,8 @@ enabled only when `SENTINEL_LOGIN_BLOB_ACCOUNT_URL` is configured, and failures 
 logged without failing user authentication.
 
 The simple setup intentionally omits Application Gateway, ACR, Service Bus, Log
-Analytics, immutable audit storage, multiple resource groups, HPA/PDBs, and the
-Kubernetes migration Job. Add those later only when the deployment needs that level of
-hardening.
+Analytics, immutable audit storage, multiple resource groups, and HPA/PDBs. Add those
+later only when the deployment needs that level of hardening.
 
 ### Observability
 
@@ -444,13 +446,14 @@ Current Azure resource baseline:
 - `stsentinel*` Blob Storage account
 - `id-sentinel-app` user-assigned managed identity
 - `app-sentinel-auth` Entra app registration
-- `vm-docker-build` for Docker image build/push and migration execution
+- optional `vm-docker-build` only when no laptop or CI runner can build Docker images
+- `sentinel-database-migration` AKS Job for Alembic schema updates
 
 The field-level Azure resource specification and deployment order are maintained in
 `docs/deployment/azure-production-deployment-guide.md`. The filename is historical;
 the content now documents the simple one-resource-group AKS deployment. It includes
-Portal fields, Docker Hub build/push commands, migration execution from the Docker VM,
-manifest replacement, deployment, verification, and cleanup.
+Portal fields, Docker Hub build/push commands, AKS migration Job execution, manifest
+replacement, deployment, verification, and cleanup.
 
 The deployment guide now documents the custom-domain HTTPS setup:
 `https://sentinel.vaultrix.in` and
@@ -461,6 +464,14 @@ terminates TLS on port 443 using Kubernetes secret `sentinel-gateway-tls` in nam
 secure cookies, and the current web image is
 `elzabeth03/sentinel-web:v1.0.3`, built with
 `NEXT_PUBLIC_API_BASE_URL=https://sentinel.vaultrix.in/api/v1`.
+The current working Identity image is
+`elzabeth03/sentinel-identity-service:v1.0.3`.
+
+On 2026-06-09, `sentinel-database-migration` completed successfully inside AKS against
+the current `sent` database. Identity Service then completed application startup and
+returned HTTP 200 from `/health/live` and `/health/ready`. This proved the supported
+migration flow and removed the Docker VM from the runtime/database deployment path.
+The current demo Key Vault name in manifests is `keyvault-demo-elz`.
 
 On 2026-06-08 a demo-only extension was appended to the deployment guide. The newest
 minimal demo path runs only web, Identity, and the gateway. Inventory, Relationship,
@@ -610,7 +621,7 @@ On 2026-06-07 after the simple one-resource-group AKS deployment rewrite:
 - ServiceAccount, SecretProviderClass, and Service selector references passed semantic
   validation.
 - The simplified manifest set contains two namespaces, no Helm, no Ingress, no HPA/PDB,
-  no `sentinel-system` namespace, no Kubernetes migration Job, and one
+  no `sentinel-system` namespace, one short-lived Kubernetes migration Job, and one
   `sentinel-gateway` LoadBalancer.
 - GitHub Actions workflow YAML parses successfully.
 - Ruff passed.
@@ -624,7 +635,8 @@ Not verified on this workstation:
 
 - Next.js typecheck/build because Node/npm are not installed.
 - Docker image/Compose startup because Docker is not installed.
-- Alembic execution against PostgreSQL because PostgreSQL is not installed.
+- Fresh migration execution from this workstation; the AKS Job was validated against
+  Azure PostgreSQL on 2026-06-09.
 - Kubernetes API server-side validation because `kubectl` is not installed and no AKS
   cluster is connected.
 

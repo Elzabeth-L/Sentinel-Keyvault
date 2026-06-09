@@ -107,6 +107,7 @@ ordered plain manifests for:
 - namespaces and resource governance
 - Workload Identity service accounts
 - Key Vault CSI integration
+- one-shot Alembic database migration Job
 - web, APIs, workers, and ClusterIP Services
 - NetworkPolicy
 - Nginx gateway exposed through a Kubernetes LoadBalancer Service
@@ -115,8 +116,10 @@ Each service retains independent image, scaling, identity, resource, and rollout
 settings. Environment-specific Azure values are explicit `REPLACE_ME_*` placeholders.
 Application secrets are never committed to these manifests.
 
-The database migration image remains under `apps/migration`, but the current simple
-Azure deployment runs it from the Docker build VM instead of a Kubernetes Job.
+The database migration image remains under `apps/migration`. The current AKS
+deployment runs it through `04-database-migration-job.yaml`, which reads the database
+URL from the Key Vault-synchronized Identity runtime secret. The Job is recreated for
+each schema release and must complete before application rollout.
 
 `deploy/compose` remains the local/VM transition configuration and is not the AKS
 source of truth.

@@ -49,9 +49,11 @@ sentinel-app      web and synchronous APIs
 sentinel-workers  discovery and relay workers
 ```
 
-The previous `sentinel-system` namespace and Kubernetes migration Job were removed
-from the simple AKS deployment. Migrations are still required, but they are run from
-the Docker build VM using the migration image.
+Database migrations run as a short-lived Job in `sentinel-app`. The Job uses the
+`identity-service` ServiceAccount, AKS Workload Identity, and the Identity
+`SecretProviderClass` to obtain the database URL from Key Vault. It applies Alembic
+migrations and exits before Identity Service is rolled out. A Docker VM is not part of
+the migration path.
 
 ## Plain Manifest Strategy
 
@@ -63,6 +65,7 @@ deploy/kubernetes/
   01-config.yaml
   02-service-accounts.yaml
   03-secret-provider-classes.yaml
+  04-database-migration-job.yaml
   04-resource-governance.yaml
   10-web.yaml
   11-identity-service.yaml
@@ -87,10 +90,10 @@ File- or SDK-based secret loading should remove those copies later.
 ## Delivery Flow
 
 1. Create Azure resources in one resource group.
-2. Build and push Docker Hub images.
-3. Run the migration image once against PostgreSQL.
-4. Replace manifest placeholders.
-5. Apply manifests.
+2. Build and push Docker Hub images from any Docker-capable workstation or CI runner.
+3. Replace manifest placeholders and apply namespaces, identity, and Key Vault CSI.
+4. Recreate and wait for the AKS database migration Job.
+5. Apply the application and gateway manifests.
 6. Get the `sentinel-gateway` public IP.
 7. Update Entra redirect URI, config, and web image with the real public IP.
 8. Verify login, inventory, relationships, and audit records.
