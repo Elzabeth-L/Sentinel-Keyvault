@@ -13,10 +13,21 @@ from sqlalchemy import (
     Uuid,
     func,
 )
+from sqlalchemy.dialects.postgresql import ENUM as PostgreSQLEnum
 from sqlalchemy.orm import Mapped, mapped_column
 
 from sentinel_common.db import Base
 from sentinel_common.models import TimestampMixin, UUIDPrimaryKeyMixin
+
+resource_state_enum = PostgreSQLEnum(
+    "active",
+    "missing",
+    "deleted",
+    "inaccessible",
+    name="resource_state",
+    schema="inventory",
+    create_type=False,
+)
 
 
 class Subscription(UUIDPrimaryKeyMixin, TimestampMixin, Base):
@@ -86,7 +97,7 @@ class Resource(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     properties: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False, default=dict)
     source_etag: Mapped[str | None] = mapped_column(String(255))
     provisioning_state: Mapped[str | None] = mapped_column(String(64))
-    state: Mapped[str] = mapped_column(String(32), nullable=False, default="active")
+    state: Mapped[str] = mapped_column(resource_state_enum, nullable=False, default="active")
     first_seen_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

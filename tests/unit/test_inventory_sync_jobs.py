@@ -2,7 +2,9 @@ from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
 import pytest
+from sentinel_inventory.models import Resource
 from sentinel_inventory.repository import InventoryRepository
+from sqlalchemy.dialects.postgresql import ENUM
 
 
 @pytest.mark.asyncio
@@ -33,3 +35,12 @@ async def test_create_sync_job_persists_entra_tenant_in_scope() -> None:
     }
     session.add.assert_called_once_with(job)
     session.flush.assert_awaited_once()
+
+
+def test_resource_state_uses_existing_postgresql_enum() -> None:
+    state_type = Resource.__table__.c.state.type
+
+    assert isinstance(state_type, ENUM)
+    assert state_type.name == "resource_state"
+    assert state_type.schema == "inventory"
+    assert state_type.create_type is False

@@ -113,7 +113,11 @@ Implemented behavior:
 - Inventory sync jobs persist both subscription IDs and the caller's Entra tenant
   ID when inserted. In-place mutation of the JSON scope was not persisted by
   SQLAlchemy and caused workers to crash with `KeyError: entra_tenant_id`.
-  Malformed jobs now fail cleanly. The corrected inventory image tag is `v1.0.3`.
+  Malformed jobs now fail cleanly.
+- `inventory.resources.state` maps explicitly to the existing PostgreSQL
+  `inventory.resource_state` enum. Mapping it as `VARCHAR` caused asyncpg insert
+  failures after Resource Graph returned data. The corrected inventory image tag
+  is `v1.0.4`.
 - organizational and personal Microsoft accounts are accepted through `/common`
 - organizational workspaces are isolated by Entra `tid`
 - shared-consumer identities are isolated by `(tid, oid)` in single-user workspaces
