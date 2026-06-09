@@ -80,6 +80,7 @@ class InventoryRepository:
         self,
         tenant_id: UUID,
         actor_id: UUID,
+        entra_tenant_id: UUID,
         mode: str,
         subscription_ids: list[UUID],
         correlation_id: UUID,
@@ -97,7 +98,10 @@ class InventoryRepository:
             tenant_id=tenant_id,
             requested_by=actor_id,
             mode=mode,
-            scope={"subscription_ids": [str(item) for item in subscription_ids]},
+            scope={
+                "subscription_ids": [str(item) for item in subscription_ids],
+                "entra_tenant_id": str(entra_tenant_id),
+            },
             correlation_id=correlation_id,
             idempotency_key=idempotency_key,
         )

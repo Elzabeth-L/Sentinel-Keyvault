@@ -156,12 +156,12 @@ async def create_sync_job(
         job = await repository.create_sync_job(
             actor.tenant_id,
             actor.actor_id,
+            actor.entra_tenant_id,
             request.mode,
             request.scope.subscription_ids,
             actor.correlation_id,
             idempotency_key,
         )
-        job.scope["entra_tenant_id"] = str(actor.entra_tenant_id)
         await enqueue_audit(
             uow.session,
             AuditEvent(

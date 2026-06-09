@@ -23,7 +23,7 @@ spec:
         seccompProfile: {type: RuntimeDefault}
       containers:
         - name: inventory-worker
-          image: elzabeth03/sentinel-inventory-service:v1.0.2
+          image: elzabeth03/sentinel-inventory-service:v1.0.3
           imagePullPolicy: IfNotPresent
           command: ["python", "-m", "sentinel_inventory.worker"]
           envFrom:

@@ -26,13 +26,14 @@ async def run_once() -> bool:
             if job is None:
                 return False
 
-        subscription_ids = [UUID(item) for item in job.scope["subscription_ids"]]
-        provider = ResourceGraphInventoryProvider(
-            settings,
-            UUID(str(job.scope["entra_tenant_id"])),
-            IdentityDelegatedCredential(settings, job.tenant_id, job.requested_by),
-        )
         try:
+            subscription_ids = [UUID(str(item)) for item in job.scope["subscription_ids"]]
+            entra_tenant_id = UUID(str(job.scope["entra_tenant_id"]))
+            provider = ResourceGraphInventoryProvider(
+                settings,
+                entra_tenant_id,
+                IdentityDelegatedCredential(settings, job.tenant_id, job.requested_by),
+            )
             available = {item.subscription_id: item for item in await provider.list_subscriptions()}
             async with session_factory() as session:
                 async with session.begin():
