@@ -108,6 +108,9 @@ Implemented behavior:
 - Inventory obtains user-bound, short-lived ARM tokens from Identity's internal broker
 - state-changing cookie requests enforce same-origin metadata
 - browser MSAL dependencies and browser access-token handling were removed
+- Azure async management clients require `aiohttp`; it is an explicit runtime
+  dependency so subscription discovery and Resource Graph calls work in the
+  inventory service image. The corrected inventory image tag is `v1.0.2`.
 - organizational and personal Microsoft accounts are accepted through `/common`
 - organizational workspaces are isolated by Entra `tid`
 - shared-consumer identities are isolated by `(tid, oid)` in single-user workspaces
