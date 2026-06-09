@@ -471,7 +471,10 @@ On 2026-06-09, `sentinel-database-migration` completed successfully inside AKS a
 the current `sent` database. Identity Service then completed application startup and
 returned HTTP 200 from `/health/live` and `/health/ready`. This proved the supported
 migration flow and removed the Docker VM from the runtime/database deployment path.
-The current demo Key Vault name in manifests is `keyvault-demo-elz`.
+The current demo Key Vault name in manifests is `RG-1-KV`. Its private endpoint and
+private DNS record resolve `rg-1-kv.vault.azure.net` to `10.10.20.4` inside the AKS
+VNet. Do not switch manifests to another vault name unless that vault also has a
+private endpoint, DNS record, VNet link, required RBAC, and the complete secret set.
 
 On 2026-06-08 a demo-only extension was appended to the deployment guide. The newest
 minimal demo path runs only web, Identity, and the gateway. Inventory, Relationship,
