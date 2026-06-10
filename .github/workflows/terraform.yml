@@ -19,7 +19,7 @@ concurrency:
 jobs:
   deploy:
     name: ${{ github.ref_name == 'master' && 'Production' || 'Development' }}
-    runs-on: ${{ vars.AZURE_RUNNER_LABEL }}
+    runs-on: ${{ vars.AZURE_RUNNER_LABEL || 'ubuntu-latest' }}
     environment: ${{ github.ref_name == 'master' && 'sentinel-prod' || 'sentinel-dev' }}
     defaults:
       run:

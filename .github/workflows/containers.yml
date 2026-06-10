@@ -22,7 +22,7 @@ concurrency:
 jobs:
   build:
     name: Build ${{ matrix.image }}
-    runs-on: ${{ vars.AZURE_RUNNER_LABEL }}
+    runs-on: ${{ vars.AZURE_RUNNER_LABEL || 'ubuntu-latest' }}
     environment: ${{ github.ref_name == 'master' && 'sentinel-prod' || 'sentinel-dev' }}
     strategy:
       fail-fast: false
