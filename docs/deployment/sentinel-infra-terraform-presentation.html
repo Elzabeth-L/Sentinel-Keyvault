@@ -661,26 +661,26 @@
 
     <section class="slide">
       <header>
-        <div class="eyebrow">Close</div>
-        <h2>What this gives the project</h2>
+        <div class="eyebrow">Future scope</div>
+        <h2>Where Sentinel can grow next</h2>
       </header>
       <div class="content two-col">
         <div class="panel">
-          <h3>Production value</h3>
+          <h3>Platform evolution</h3>
           <ul>
-            <li>A real cloud edge with WAF and managed TLS.</li>
-            <li>Private platform services and least-privilege workload access.</li>
-            <li>Repeatable environment creation through Terraform.</li>
-            <li>Clear separation between dev and prod subscriptions.</li>
+            <li>Use Azure AI services to summarize risky changes and explain resource drift.</li>
+            <li>Add policy-as-code gates for tags, SKUs, public exposure, and encryption.</li>
+            <li>Expand event-driven automation with Event Grid, Functions, and workflow approvals.</li>
+            <li>Introduce multi-region recovery patterns for critical platform services.</li>
           </ul>
         </div>
         <div class="panel">
-          <h3>Next hardening steps</h3>
+          <h3>Product capabilities</h3>
           <ul>
-            <li>Complete Front Door custom domain validation.</li>
-            <li>Use immutable image digests for production deployments.</li>
-            <li>Automate ACR builds through GitHub OIDC and ACR Tasks.</li>
-            <li>Run backup restore tests and document operational runbooks.</li>
+            <li>Build an AI change assistant for impact analysis and remediation guidance.</li>
+            <li>Add natural-language search across Azure Resource Graph inventory.</li>
+            <li>Generate compliance evidence from logs, policies, RBAC, and deployment history.</li>
+            <li>Provide executive dashboards for cost, risk, reliability, and ownership.</li>
           </ul>
         </div>
       </div>
@@ -690,6 +690,7 @@
 
   <div class="controls" aria-label="Slide controls">
     <button type="button" id="prev">Back</button>
+    <button type="button" id="fullscreen">Fullscreen</button>
     <button type="button" id="next">Next</button>
   </div>
 
@@ -711,6 +712,19 @@
 
     document.getElementById("prev").addEventListener("click", () => show(index - 1));
     document.getElementById("next").addEventListener("click", () => show(index + 1));
+
+    const fullscreenButton = document.getElementById("fullscreen");
+    fullscreenButton.addEventListener("click", async () => {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    });
+
+    document.addEventListener("fullscreenchange", () => {
+      fullscreenButton.textContent = document.fullscreenElement ? "Exit full screen" : "Fullscreen";
+    });
 
     window.addEventListener("keydown", (event) => {
       if (["ArrowRight", "PageDown", " "].includes(event.key)) show(index + 1);

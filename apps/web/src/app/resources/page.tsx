@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
@@ -178,7 +179,7 @@ export default function ResourcesPage() {
           <table className="w-full min-w-[800px] text-left text-sm">
             <thead className="text-muted">
               <tr>
-                {["Name", "Type", "Resource group", "Location", "State"].map((item) => (
+                {["Name", "Type", "Resource group", "Location", "State", "Dependencies"].map((item) => (
                   <th className="border-b border-border px-5 py-3 font-medium" key={item}>{item}</th>
                 ))}
               </tr>
@@ -191,6 +192,14 @@ export default function ResourcesPage() {
                   <td className="px-5 py-3">{resource.resource_group}</td>
                   <td className="px-5 py-3">{resource.location ?? "global"}</td>
                   <td className="px-5 py-3 text-success">{resource.state}</td>
+                  <td className="px-5 py-3">
+                    <Link
+                      className="font-medium text-primary hover:underline"
+                      href={`/dependencies?root=${encodeURIComponent(resource.id)}`}
+                    >
+                      Explore
+                    </Link>
+                  </td>
                 </tr>
               ))}
             </tbody>

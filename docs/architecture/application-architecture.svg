@@ -1,0 +1,224 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2200" height="1450" viewBox="0 0 2200 1450">
+  <defs>
+    <marker id="arrow-blue" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,5 L7,2.5 z" fill="#60a5fa"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,5 L7,2.5 z" fill="#34d399"/>
+    </marker>
+    <marker id="arrow-purple" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,5 L7,2.5 z" fill="#c084fc"/>
+    </marker>
+    <marker id="arrow-yellow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,5 L7,2.5 z" fill="#fbbf24"/>
+    </marker>
+    <style>
+      .bg { fill: #07111f; }
+      .title { fill: #f8fafc; font: 800 38px Segoe UI, Arial, sans-serif; }
+      .subtitle { fill: #a9b7ca; font: 17px Segoe UI, Arial, sans-serif; }
+      .section-title { fill: #dbeafe; font: 800 23px Segoe UI, Arial, sans-serif; }
+      .section-subtitle { fill: #94a3b8; font: 14px Segoe UI, Arial, sans-serif; }
+      .label { fill: #f8fafc; font: 800 16px Segoe UI, Arial, sans-serif; text-anchor: middle; }
+      .label-left { fill: #f8fafc; font: 800 16px Segoe UI, Arial, sans-serif; }
+      .small { fill: #cbd5e1; font: 13px Segoe UI, Arial, sans-serif; text-anchor: middle; }
+      .small-left { fill: #cbd5e1; font: 13px Segoe UI, Arial, sans-serif; }
+      .tiny { fill: #94a3b8; font: 12px Segoe UI, Arial, sans-serif; }
+      .legend { fill: #cbd5e1; font: 13px Segoe UI, Arial, sans-serif; }
+
+      .layer { fill: #0d1829; stroke: #334155; stroke-width: 2; }
+      .edge-layer { fill: #10172a; stroke: #7c3aed; stroke-width: 2; }
+      .aks-layer { fill: #0f2437; stroke: #38bdf8; stroke-width: 2; }
+      .data-layer { fill: #10251e; stroke: #34d399; stroke-width: 2; }
+      .namespace { fill: #0d2033; stroke: #2563eb; stroke-width: 2; stroke-dasharray: 8 6; }
+      .worker-namespace { fill: #12251d; stroke: #22c55e; stroke-width: 2; stroke-dasharray: 8 6; }
+
+      .node-blue { fill: #172554; stroke: #60a5fa; stroke-width: 2; }
+      .node-cyan { fill: #102a3a; stroke: #38bdf8; stroke-width: 2; }
+      .node-green { fill: #064e3b; stroke: #34d399; stroke-width: 2; }
+      .node-purple { fill: #2e1065; stroke: #c084fc; stroke-width: 2; }
+      .node-yellow { fill: #3b2f12; stroke: #fbbf24; stroke-width: 2; }
+      .node-gray { fill: #1f2937; stroke: #94a3b8; stroke-width: 2; }
+      .node-red { fill: #3a1118; stroke: #fb7185; stroke-width: 2; }
+
+      .edge { stroke-linecap: round; stroke-linejoin: round; fill: none; }
+      .edge-blue { stroke: #60a5fa; stroke-width: 2; marker-end: url(#arrow-blue); }
+      .edge-green { stroke: #34d399; stroke-width: 2; marker-end: url(#arrow-green); }
+      .edge-purple { stroke: #c084fc; stroke-width: 2; marker-end: url(#arrow-purple); }
+      .edge-yellow { stroke: #fbbf24; stroke-width: 2; marker-end: url(#arrow-yellow); }
+      .edge-muted { stroke: #64748b; stroke-width: 1.5; fill: none; stroke-dasharray: 7 7; marker-end: url(#arrow-blue); }
+
+      marker path { stroke: none; }
+    </style>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="2200" height="1450"/>
+  <text class="title" x="60" y="64">Sentinel Application Architecture</text>
+  <text class="subtitle" x="62" y="100">Microservices, workers, PostgreSQL schemas, identity flow, runtime secrets, and Azure integration points.</text>
+
+  <!-- Edge layer -->
+  <rect class="edge-layer" x="60" y="145" width="2080" height="190" rx="28"/>
+  <text class="section-title" x="95" y="190">Public Edge and Authentication</text>
+  <text class="section-subtitle" x="95" y="216">Browser traffic enters through Azure edge controls before reaching AKS. Microsoft Entra ID handles user sign-in.</text>
+
+  <rect class="node-gray" x="105" y="245" width="190" height="58" rx="16"/>
+  <text class="label" x="200" y="270">User Browser</text>
+  <text class="small" x="200" y="290">sentinel.vaultrix.in</text>
+
+  <rect class="node-purple" x="365" y="245" width="215" height="58" rx="16"/>
+  <text class="label" x="472" y="270">Azure Front Door</text>
+  <text class="small" x="472" y="290">Global entry + WAF</text>
+
+  <rect class="node-purple" x="650" y="245" width="235" height="58" rx="16"/>
+  <text class="label" x="768" y="270">Application Gateway</text>
+  <text class="small" x="768" y="290">Regional WAF + routing</text>
+
+  <rect class="node-blue" x="955" y="245" width="225" height="58" rx="16"/>
+  <text class="label" x="1068" y="270">Microsoft Entra ID</text>
+  <text class="small" x="1068" y="290">OAuth sign-in</text>
+
+  <path class="edge-blue" d="M295 274 L365 274"/>
+  <path class="edge-blue" d="M580 274 L650 274"/>
+  <path class="edge-purple" d="M200 245 C220 170 995 165 1068 245"/>
+  <text class="tiny" x="615" y="172">Login redirect and callback</text>
+
+  <!-- AKS layer -->
+  <rect class="aks-layer" x="60" y="375" width="1340" height="850" rx="28"/>
+  <text class="section-title" x="95" y="420">AKS Application Runtime</text>
+  <text class="section-subtitle" x="95" y="446">The gateway is the in-cluster routing boundary. APIs run in sentinel-app; workers run in sentinel-workers.</text>
+
+  <rect class="node-cyan" x="545" y="475" width="235" height="68" rx="18"/>
+  <text class="label" x="662" y="502">Sentinel Gateway</text>
+  <text class="small" x="662" y="522">Nginx reverse proxy</text>
+
+  <path class="edge-blue" d="M768 303 C760 355 720 410 662 475"/>
+
+  <rect class="namespace" x="95" y="590" width="870" height="550" rx="22"/>
+  <text class="label-left" x="125" y="628">Namespace: sentinel-app</text>
+  <text class="small-left" x="125" y="651">Frontend and synchronous API microservices</text>
+
+  <rect class="node-blue" x="145" y="695" width="185" height="72" rx="16"/>
+  <text class="label" x="238" y="722">Web App</text>
+  <text class="small" x="238" y="742">Next.js UI</text>
+
+  <rect class="node-green" x="390" y="695" width="205" height="72" rx="16"/>
+  <text class="label" x="493" y="722">Identity Service</text>
+  <text class="small" x="493" y="742">OAuth, users, tenants</text>
+
+  <rect class="node-green" x="655" y="695" width="210" height="72" rx="16"/>
+  <text class="label" x="760" y="722">Inventory Service</text>
+  <text class="small" x="760" y="742">Resources, sync jobs</text>
+
+  <rect class="node-green" x="145" y="820" width="220" height="72" rx="16"/>
+  <text class="label" x="255" y="847">Relationship Service</text>
+  <text class="small" x="255" y="867">Dependency graph API</text>
+
+  <rect class="node-green" x="425" y="820" width="235" height="72" rx="16"/>
+  <text class="label" x="542" y="847">Change Intelligence</text>
+  <text class="small" x="542" y="867">Impact and findings</text>
+
+  <rect class="node-green" x="720" y="820" width="205" height="72" rx="16"/>
+  <text class="label" x="823" y="847">Operations Service</text>
+  <text class="small" x="823" y="867">Approvals, execution</text>
+
+  <rect class="node-green" x="285" y="945" width="195" height="72" rx="16"/>
+  <text class="label" x="382" y="972">Audit Service</text>
+  <text class="small" x="382" y="992">Activity evidence</text>
+
+  <rect class="node-yellow" x="560" y="945" width="245" height="72" rx="16"/>
+  <text class="label" x="682" y="972">Migration Job</text>
+  <text class="small" x="682" y="992">Alembic schema setup</text>
+
+  <path class="edge-blue" d="M615 543 C530 610 350 650 238 695"/>
+  <path class="edge-blue" d="M646 543 C610 610 535 650 493 695"/>
+  <path class="edge-blue" d="M680 543 C720 610 752 650 760 695"/>
+  <path class="edge-blue" d="M610 543 C455 645 320 745 255 820"/>
+  <path class="edge-blue" d="M664 543 C625 660 565 755 542 820"/>
+  <path class="edge-blue" d="M708 543 C770 660 815 755 823 820"/>
+  <path class="edge-blue" d="M640 543 C490 700 400 875 382 945"/>
+
+  <rect class="worker-namespace" x="1010" y="590" width="345" height="550" rx="22"/>
+  <text class="label-left" x="1040" y="628">Namespace: sentinel-workers</text>
+  <text class="small-left" x="1040" y="651">Background processing</text>
+
+  <rect class="node-yellow" x="1070" y="735" width="225" height="78" rx="16"/>
+  <text class="label" x="1182" y="765">Inventory Worker</text>
+  <text class="small" x="1182" y="785">Resource Graph + ARM sync</text>
+
+  <rect class="node-yellow" x="1070" y="900" width="225" height="78" rx="16"/>
+  <text class="label" x="1182" y="930">Outbox Relay</text>
+  <text class="small" x="1182" y="950">Publishes async events</text>
+
+  <path class="edge-yellow" d="M865 735 C955 735 1005 755 1070 774"/>
+  <path class="edge-yellow" d="M480 981 C740 1015 910 970 1070 939"/>
+
+  <!-- Data and platform layer -->
+  <rect class="data-layer" x="1450" y="375" width="690" height="850" rx="28"/>
+  <text class="section-title" x="1485" y="420">Data and Azure Platform Services</text>
+  <text class="section-subtitle" x="1485" y="446">Private platform services support persistence, secrets, images, audit artifacts, and Azure inventory collection.</text>
+
+  <rect class="node-green" x="1510" y="505" width="565" height="135" rx="20"/>
+  <text class="label" x="1792" y="535">Azure PostgreSQL Flexible Server</text>
+  <text class="small" x="1792" y="559">Single Sentinel database with service-owned schemas</text>
+  <text class="tiny" x="1545" y="590">identity | inventory | relationships | intelligence | operations | audit | platform</text>
+  <text class="tiny" x="1545" y="616">RLS-ready tenant isolation, outbox table, Alembic migrations</text>
+
+  <rect class="node-purple" x="1510" y="700" width="250" height="86" rx="18"/>
+  <text class="label" x="1635" y="732">Azure Key Vault</text>
+  <text class="small" x="1635" y="752">Runtime secrets via CSI</text>
+
+  <rect class="node-yellow" x="1825" y="700" width="250" height="86" rx="18"/>
+  <text class="label" x="1950" y="732">Azure Container Registry</text>
+  <text class="small" x="1950" y="752">Microservice images</text>
+
+  <rect class="node-blue" x="1510" y="845" width="250" height="86" rx="18"/>
+  <text class="label" x="1635" y="877">Azure Storage</text>
+  <text class="small" x="1635" y="897">Login and audit artifacts</text>
+
+  <rect class="node-blue" x="1825" y="845" width="250" height="86" rx="18"/>
+  <text class="label" x="1950" y="877">Azure Resource Graph</text>
+  <text class="small" x="1950" y="897">Tenant resource queries</text>
+
+  <rect class="node-blue" x="1825" y="990" width="250" height="86" rx="18"/>
+  <text class="label" x="1950" y="1022">Azure Resource Manager</text>
+  <text class="small" x="1950" y="1042">Resource metadata APIs</text>
+
+  <!-- App to database fan-in -->
+  <path class="edge-green" d="M595 731 C1020 650 1290 575 1510 572"/>
+  <path class="edge-green" d="M865 731 C1120 660 1330 590 1510 572"/>
+  <path class="edge-green" d="M365 856 C820 760 1240 620 1510 572"/>
+  <path class="edge-green" d="M660 856 C1000 760 1285 630 1510 572"/>
+  <path class="edge-green" d="M925 856 C1120 770 1325 645 1510 572"/>
+  <path class="edge-green" d="M480 981 C885 900 1270 665 1510 572"/>
+  <path class="edge-green" d="M805 981 C1040 875 1320 660 1510 572"/>
+  <path class="edge-green" d="M1295 774 C1370 720 1430 650 1510 600"/>
+  <path class="edge-green" d="M1295 939 C1390 835 1440 720 1510 615"/>
+
+  <!-- Secrets and image pull -->
+  <path class="edge-purple" d="M1510 743 C1320 740 1100 700 865 710"/>
+  <path class="edge-purple" d="M1510 743 C1280 800 1050 865 925 850"/>
+  <path class="edge-purple" d="M1510 743 C1315 890 1210 915 1295 939"/>
+  <path class="edge-yellow" d="M1950 700 C1870 540 1620 430 780 475"/>
+
+  <!-- Azure API calls -->
+  <path class="edge-blue" d="M1295 774 C1500 775 1730 835 1825 888"/>
+  <path class="edge-blue" d="M1295 774 C1510 830 1730 960 1825 1033"/>
+  <path class="edge-blue" d="M595 710 C920 610 1050 445 1068 303"/>
+  <path class="edge-blue" d="M238 695 C330 520 720 360 955 282"/>
+
+  <!-- Storage output -->
+  <path class="edge-blue" d="M480 981 C805 1085 1250 985 1510 888"/>
+  <path class="edge-blue" d="M595 710 C880 765 1230 850 1510 888"/>
+
+  <!-- Legend -->
+  <rect class="layer" x="60" y="1270" width="2080" height="120" rx="22"/>
+  <text class="section-title" x="95" y="1310">Legend</text>
+  <line x1="100" y1="1345" x2="180" y2="1345" class="edge-blue"/>
+  <text class="legend" x="195" y="1350">Request or Azure API flow</text>
+  <line x1="445" y1="1345" x2="525" y2="1345" class="edge-green"/>
+  <text class="legend" x="540" y="1350">Database persistence</text>
+  <line x1="800" y1="1345" x2="880" y2="1345" class="edge-purple"/>
+  <text class="legend" x="895" y="1350">Secrets and workload identity</text>
+  <line x1="1210" y1="1345" x2="1290" y2="1345" class="edge-yellow"/>
+  <text class="legend" x="1305" y="1350">Image pull or async worker flow</text>
+  <text class="tiny" x="95" y="1378">Application scope: frontend, gateway, six API microservices, two workers, migration job, PostgreSQL schemas, Key Vault, ACR, Storage, Entra ID, Resource Graph, and ARM.</text>
+</svg>
