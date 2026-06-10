@@ -37,7 +37,7 @@ spec:
             matchLabels: {app.kubernetes.io/name: change-intelligence-service}
       containers:
         - name: change-intelligence-service
-          image: elzabeth03/sentinel-change-intelligence-service:v1.0.0
+          image: rg1acra8270b.azurecr.io/sentinel-change-intelligence-service:v1.0.0
           imagePullPolicy: IfNotPresent
           ports: [{name: http, containerPort: 8000}]
           envFrom:

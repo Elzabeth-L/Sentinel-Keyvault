@@ -37,7 +37,7 @@ spec:
             matchLabels: {app.kubernetes.io/name: audit-service}
       containers:
         - name: audit-service
-          image: elzabeth03/sentinel-audit-service:v1.0.0
+          image: rg1acra8270b.azurecr.io/sentinel-audit-service:v1.0.0
           imagePullPolicy: IfNotPresent
           ports: [{name: http, containerPort: 8000}]
           envFrom:

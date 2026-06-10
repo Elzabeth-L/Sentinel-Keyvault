@@ -6,11 +6,6 @@ on:
       - "deploy/kubernetes/**"
       - "apps/migration/**"
       - ".github/workflows/kubernetes.yml"
-  pull_request:
-    paths:
-      - "deploy/kubernetes/**"
-      - "apps/migration/**"
-      - ".github/workflows/kubernetes.yml"
 
 permissions:
   contents: read

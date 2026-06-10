@@ -1,0 +1,5 @@
+storage_account_name = "devrg1tfstateabc123"
+
+allowed_public_ip_ranges = [
+  "203.0.113.10/32",
+]

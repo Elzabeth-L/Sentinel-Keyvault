@@ -1,0 +1,75 @@
+okay dont create anything yet.
+ but i need to do the entire thing in terraform which i need you to do.
+but dont use the current architecture, i want you to use certain resources i tell you to and ill give you an architecture diagram as well for reference.
+
+![alt text](Untitled-2026-05-11-1638.excalidraw.svg)
+
+### PROD Architecture
+
+keep a naming format like- RG-1, RG-1-VNET,...
+
+i need resources for the following in prod environment:
+my dns: sentinel.vaultrix.in
+azure front door for global load balancing and WAF
+application gateway with WAF 
+create proper modules-follow actual terraform workspace for dev and prod, we will use 2 subscriptions for dev and prod, so we can have separate state files and proper isolation.
+also stoing the state file in azure storage account with proper access control and versioning enabled.
+AKS cluster with proper node pools(system noe pool and user node pool) and scaling configuration
+i want postgresql to be put in vnet integration with subnet delegation 
+i want storage account with private endpoint and public access disabled, versioning + soft delete enabled
+key vault with private endpoint, public access disabled, purge protection enabled
+use acr for images instaed of docker hub, with private endpoint and proper access control
+
+there are docs you can reference for the architecture and deployment guide in the repo, you can use those to understand the requirements better.
+
+you can you use az to get the subsciptions
+there are two subscription there 
+sentinel-dev and sentinel-prod 
+you can az to delete all the resources under sentinel-dev.
+
+also use proper rbac and policies for naming conventions and access control. use managed identities for the services and avoid using any embedded credentials. also make sure to have proper logging and monitoring in place for all the resources. also make sure to have proper tagging for all the resources for better management and cost tracking. also make sure to have proper backup and disaster recovery plan in place for all the critical resources. 
+
+also use az to get the current skus before even planning or applying the terraform code, so that we can make sure to use the right skus for the resources. also make sure to have proper documentation for the terraform code and the architecture for better understanding and maintenance in the future. 
+
+give me the final plan what ere gonna do and then ill tell you to proceed or not.
+
+
+----------------------------------------------------------------
+
+okay some things to change:
+
+under this tenant id: 83474cb5-f1fa-4d06-906c-e5dad12ce3b9
+these are the subscription ids of the 2 subs-
+sentinel-dev: 
+6b01db76-626a-44a2-8119-17682410914a
+sentinel-prod:
+
+a8270be7-dabc-4d92-98db-26a55025b0df
+
+as mentioned in the architecture idgram i have provided, dev does not require a front door. and then for aks only use one node pool in dev.
+
+also i have only docker images now-so configuring them to acr- how will it be done?
+
+whenever the statefile is updated, it should be stored in the blob storage alos-dev and prod separatelu
+
+when i push to github, it has to trigger the pipeline-not with prs and all.
+
+also mention what all you want me to keep in the secrets in github.
+
+dont keep any secrets in the code.
+
+for regions use east us and west us if available for all resources or central india and south india.
+
+Whether operators and CI have private-network access to AKS and Terraform state.--no
+
+budget parroved
+
+Required production RPO and RTO.-- nod iea about that
+
+Whether authoritative DNS remains with the current provider or moves to Azure DNS.- i have my domains on goddady. you have ot bring it to azure dns.
+
+Whether the application client secret remains temporarily or application authentication will be changed to a secretless method.-choode whatever is best.
+
+should we go with terarform workspace structure or shoudl we go with env based folders. choose whatever is best and also give a justification.
+
+also how are the images getting pushed to acr. i have them dcoker images now.

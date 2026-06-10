@@ -1,0 +1,5 @@
+resource_group_name  = "RG-1-TFSTATE"
+storage_account_name = "rg1tfstateabc123"
+container_name       = "tfstate"
+key                  = "sentinel-prod.tfstate"
+use_azuread_auth      = true

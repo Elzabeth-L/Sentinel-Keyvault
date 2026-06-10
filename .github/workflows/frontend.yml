@@ -3,8 +3,6 @@ name: Frontend
 on:
   push:
     paths: ["apps/web/**"]
-  pull_request:
-    paths: ["apps/web/**"]
 
 permissions:
   contents: read

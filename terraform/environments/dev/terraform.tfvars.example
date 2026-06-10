@@ -1,0 +1,15 @@
+name_suffix = "abc123"
+owner       = "platform-team"
+cost_center = "sentinel"
+
+operator_and_ci_cidrs = [
+  "203.0.113.10/32",
+]
+
+# Supply the real password through TF_VAR_postgres_admin_password.
+# postgres_admin_password = "DO_NOT_COMMIT"
+
+# Add after a certificate exists in the development Key Vault.
+# gateway_certificate_secret_id = "https://<vault>.vault.azure.net/secrets/<certificate>"
+
+alert_email = "platform@example.com"

@@ -19,7 +19,8 @@ data:
   SENTINEL_IDENTITY_SERVICE_URL: http://identity-service.sentinel-app.svc.cluster.local
   SENTINEL_AUDIT_SERVICE_URL: http://audit-service.sentinel-app.svc.cluster.local
   SENTINEL_RELATIONSHIP_SERVICE_URL: http://relationship-service.sentinel-app.svc.cluster.local
-  # Add SENTINEL_LOGIN_BLOB_ACCOUNT_URL with the Storage Account blob URL to record logins.
+  # Temporarily disabled until identity-service image includes aiohttp for Azure async auth.
+  # SENTINEL_LOGIN_BLOB_ACCOUNT_URL: https://rg1sta8270b.blob.core.windows.net
   SENTINEL_LOGIN_BLOB_CONTAINER_NAME: sentinel-login-events
   AZURE_TENANT_ID: 83474cb5-f1fa-4d06-906c-e5dad12ce3b9
 ---

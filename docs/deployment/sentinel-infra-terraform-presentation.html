@@ -1,0 +1,725 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sentinel Azure Infrastructure and Terraform Deployment</title>
+  <style>
+    :root {
+      --bg: #07111f;
+      --bg-2: #0b1a2c;
+      --panel: rgba(15, 32, 52, 0.82);
+      --panel-2: rgba(20, 48, 78, 0.78);
+      --text: #eef6ff;
+      --muted: #a8bdd4;
+      --line: rgba(137, 183, 225, 0.24);
+      --accent: #35b8ff;
+      --accent-2: #7ce7d5;
+      --warning: #ffd166;
+      --good: #71f6a5;
+      --shadow: 0 24px 70px rgba(0, 0, 0, 0.34);
+      --radius: 26px;
+      font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background:
+        radial-gradient(circle at 12% 16%, rgba(53, 184, 255, 0.24), transparent 34%),
+        radial-gradient(circle at 84% 22%, rgba(124, 231, 213, 0.16), transparent 32%),
+        linear-gradient(135deg, #050b15 0%, var(--bg) 46%, #081a2e 100%);
+      color: var(--text);
+    }
+
+    body {
+      overflow: hidden;
+    }
+
+    .deck {
+      height: 100vh;
+      width: 100vw;
+      position: relative;
+    }
+
+    .slide {
+      display: none;
+      height: 100vh;
+      width: 100vw;
+      padding: 56px 68px 42px;
+      position: absolute;
+      inset: 0;
+    }
+
+    .slide.active {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 28px;
+      animation: fade 220ms ease-out;
+    }
+
+    @keyframes fade {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .eyebrow {
+      color: var(--accent-2);
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    h1, h2, h3, p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: clamp(46px, 5.8vw, 88px);
+      line-height: 0.96;
+      letter-spacing: -0.055em;
+      max-width: 1050px;
+    }
+
+    h2 {
+      font-size: clamp(34px, 3.6vw, 58px);
+      line-height: 1.02;
+      letter-spacing: -0.045em;
+      max-width: 1030px;
+    }
+
+    h3 {
+      font-size: 22px;
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 22px;
+      line-height: 1.45;
+      max-width: 860px;
+      margin-top: 22px;
+    }
+
+    .content {
+      min-height: 0;
+      display: grid;
+      align-items: center;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      align-items: stretch;
+    }
+
+    .three-col {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .panel {
+      background: linear-gradient(180deg, var(--panel), rgba(11, 26, 44, 0.72));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 30px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .panel.light {
+      background: linear-gradient(180deg, rgba(34, 71, 108, 0.82), rgba(13, 31, 53, 0.8));
+    }
+
+    .panel h3 {
+      margin-bottom: 14px;
+    }
+
+    ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    li {
+      color: var(--muted);
+      font-size: 20px;
+      line-height: 1.42;
+      margin: 14px 0;
+      padding-left: 26px;
+      position: relative;
+    }
+
+    li::before {
+      content: "";
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: var(--accent);
+      position: absolute;
+      left: 0;
+      top: 0.68em;
+      box-shadow: 0 0 18px rgba(53, 184, 255, 0.7);
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.12fr 0.88fr;
+      gap: 42px;
+      align-items: center;
+    }
+
+    .hero-card {
+      min-height: 430px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .metric-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 26px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px;
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 28px;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .diagram-wrap {
+      height: 100%;
+      min-height: 620px;
+      display: grid;
+      grid-template-rows: 1fr auto;
+      gap: 14px;
+    }
+
+    .diagram {
+      width: 100%;
+      height: 100%;
+      min-height: 560px;
+      object-fit: contain;
+      border-radius: 20px;
+      background: #f8fafc;
+      padding: 14px;
+    }
+
+    .caption {
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 14px;
+      align-items: center;
+    }
+
+    .node {
+      min-height: 155px;
+      display: grid;
+      align-content: center;
+      text-align: center;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 18px;
+      position: relative;
+    }
+
+    .node:not(:last-child)::after {
+      content: ">";
+      position: absolute;
+      right: -16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--accent-2);
+      font-size: 26px;
+      font-weight: 800;
+    }
+
+    .node strong {
+      font-size: 20px;
+      margin-bottom: 8px;
+    }
+
+    .node span {
+      color: var(--muted);
+      line-height: 1.35;
+      font-size: 15px;
+    }
+
+    .code {
+      font-family: "Cascadia Code", Consolas, monospace;
+      font-size: 16px;
+      color: #d7efff;
+      background: rgba(1, 7, 15, 0.72);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 22px;
+      white-space: pre-wrap;
+      line-height: 1.5;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--line);
+      color: var(--accent-2);
+      background: rgba(124, 231, 213, 0.08);
+      border-radius: 999px;
+      padding: 9px 13px;
+      font-size: 14px;
+      font-weight: 700;
+      margin: 5px 6px 5px 0;
+    }
+
+    .matrix {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 22px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.04);
+      box-shadow: var(--shadow);
+    }
+
+    .matrix th, .matrix td {
+      text-align: left;
+      padding: 17px 18px;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 17px;
+      vertical-align: top;
+    }
+
+    .matrix th {
+      color: var(--text);
+      background: rgba(53, 184, 255, 0.1);
+      font-size: 15px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .matrix tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .status {
+      display: inline-block;
+      color: var(--good);
+      font-weight: 800;
+    }
+
+    .warn {
+      color: var(--warning);
+      font-weight: 800;
+    }
+
+    .footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: rgba(238, 246, 255, 0.58);
+      font-size: 14px;
+    }
+
+    .progress {
+      height: 4px;
+      width: 260px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.12);
+      overflow: hidden;
+    }
+
+    .bar {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    }
+
+    .controls {
+      position: fixed;
+      right: 22px;
+      bottom: 22px;
+      z-index: 10;
+      display: flex;
+      gap: 10px;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      color: var(--text);
+      background: rgba(10, 25, 43, 0.82);
+      border-radius: 999px;
+      padding: 11px 16px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    button:hover {
+      border-color: rgba(53, 184, 255, 0.72);
+      background: rgba(53, 184, 255, 0.12);
+    }
+
+    .notes {
+      display: none;
+    }
+
+    @media print {
+      body { overflow: visible; background: #fff; color: #111827; }
+      .deck { height: auto; }
+      .slide, .slide.active {
+        display: grid;
+        position: relative;
+        page-break-after: always;
+        height: 100vh;
+        background: #07111f;
+        color: var(--text);
+      }
+      .controls { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="deck" aria-label="Sentinel Azure Infrastructure presentation">
+    <section class="slide active">
+      <header>
+        <div class="eyebrow">Sentinel Change Intelligence</div>
+      </header>
+      <div class="content hero-grid">
+        <div>
+          <h1>Production Azure Platform, Built with Terraform</h1>
+          <p class="subtitle">
+            A secure, private-by-default deployment for Sentinel using Front Door, WAF,
+            AKS, private data services, managed identities, and environment-isolated state.
+          </p>
+          <div class="metric-row">
+            <div class="metric"><strong>2</strong><span>subscriptions</span></div>
+            <div class="metric"><strong>1</strong><span>prod workload RG</span></div>
+            <div class="metric"><strong>0</strong><span>secrets in code</span></div>
+          </div>
+        </div>
+        <div class="panel hero-card">
+          <div>
+            <h3>Presentation focus</h3>
+            <ul>
+              <li>How traffic enters the platform and reaches AKS.</li>
+              <li>How secrets, images, data, and state are isolated.</li>
+              <li>How Terraform makes the build repeatable and reviewable.</li>
+            </ul>
+          </div>
+          <div>
+            <span class="tag">Azure Front Door</span>
+            <span class="tag">Application Gateway WAF</span>
+            <span class="tag">AKS</span>
+            <span class="tag">Key Vault</span>
+            <span class="tag">Terraform</span>
+          </div>
+        </div>
+      </div>
+      <footer class="footer"><span>01 / 10</span><div class="progress"><div class="bar"></div></div></footer>
+      <aside class="notes">Open by positioning this as the production-ready target, not just a diagram.</aside>
+    </section>
+
+    <section class="slide">
+      <header>
+        <div class="eyebrow">Why this architecture</div>
+        <h2>Security first, but still deployable</h2>
+      </header>
+      <div class="content three-col">
+        <div class="panel">
+          <h3>Public edge is controlled</h3>
+          <ul>
+            <li>Users enter through Azure Front Door.</li>
+            <li>WAF policy protects public routes.</li>
+            <li>Application Gateway is the regional ingress layer.</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h3>Data plane is private</h3>
+          <ul>
+            <li>Key Vault, ACR, Storage, and PostgreSQL use private endpoints.</li>
+            <li>AKS talks to private services through VNet DNS.</li>
+            <li>Public data access is disabled by default.</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h3>Identity replaces passwords</h3>
+          <ul>
+            <li>Workloads use managed identities.</li>
+            <li>Kubernetes service accounts use federated credentials.</li>
+            <li>RBAC is scoped per workload and resource.</li>
+          </ul>
+        </div>
+      </div>
+      <footer class="footer"><span>02 / 10</span><div class="progress"><div class="bar"></div></div></footer>
+    </section>
+
+    <section class="slide">
+      <header>
+        <div class="eyebrow">Architecture diagram</div>
+        <h2>Production resource layout</h2>
+      </header>
+      <div class="content">
+        <div class="diagram-wrap panel light">
+          <img class="diagram" src="assets/sentinel-prod-terraform-architecture.excalidraw.svg" alt="Sentinel Azure production architecture diagram" />
+          <p class="caption">
+            Diagram source: Excalidraw architecture provided for the Terraform production target.
+            It shows the request path, VNet placement, AKS, private endpoints, and managed services.
+          </p>
+        </div>
+      </div>
+      <footer class="footer"><span>03 / 10</span><div class="progress"><div class="bar"></div></div></footer>
+    </section>
+
+    <section class="slide">
+      <header>
+        <div class="eyebrow">Traffic flow</div>
+        <h2>From user request to service response</h2>
+      </header>
+      <div class="content">
+        <div class="flow">
+          <div class="node"><strong>User</strong><span>Browses to sentinel.vaultrix.in over HTTPS</span></div>
+          <div class="node"><strong>Front Door</strong><span>Global TLS, routing, WAF and edge health probes</span></div>
+          <div class="node"><strong>App Gateway</strong><span>Regional ingress, WAF, backend health checks</span></div>
+          <div class="node"><strong>AKS Gateway</strong><span>Internal load balancer routes API and web paths</span></div>
+          <div class="node"><strong>Microservices</strong><span>Identity, inventory, relationship, intelligence, operations, audit</span></div>
+        </div>
+      </div>
+      <footer class="footer"><span>04 / 10</span><div class="progress"><div class="bar"></div></div></footer>
+    </section>
+
+    <section class="slide">
+      <header>
+        <div class="eyebrow">Resource groups and network</div>
+        <h2>One production workload stamp with clear subnet boundaries</h2>
+      </header>
+      <div class="content two-col">
+        <div class="panel">
+          <h3>Production resource groups</h3>
+          <table class="matrix">
+            <tr><th>Group</th><th>Purpose</th></tr>
+            <tr><td>RG-1</td><td>Production workload resources</td></tr>
+            <tr><td>RG-1-TFSTATE</td><td>Terraform state storage and lock protection</td></tr>
+            <tr><td>MC_*</td><td>AKS managed node infrastructure</td></tr>
+          </table>
+        </div>
+        <div class="panel">
+          <h3>Subnet model</h3>
+          <ul>
+            <li><strong>SNET-APP-GATEWAY:</strong> Application Gateway frontend and WAF.</li>
+            <li><strong>SNET-AKS:</strong> AKS nodes and internal gateway service.</li>
+            <li><strong>SNET-PRIVATE-ENDPOINTS:</strong> ACR, Key Vault, Blob private endpoints.</li>
+            <li><strong>SNET-POSTGRESQL:</strong> PostgreSQL delegated subnet.</li>
+          </ul>
+        </div>
+      </div>
+      <footer class="footer"><span>05 / 10</span><div class="progress"><div class="bar"></div></div></footer>
+    </section>
+
+    <section class="slide">
+      <header>
+        <div class="eyebrow">Private platform services</div>
+        <h2>Secrets, images, data, and audit storage stay inside Azure controls</h2>
+      </header>
+      <div class="content">
+        <table class="matrix">
+          <tr>
+            <th>Service</th>
+            <th>Security posture</th>
+            <th>Used by</th>
+          </tr>
+          <tr>
+            <td>Azure Key Vault</td>
+            <td>Private endpoint, RBAC, purge protection, soft delete</td>
+            <td>Runtime secrets, token keys, client secret, DB URL</td>
+          </tr>
+          <tr>
+            <td>Azure Container Registry</td>
+            <td>Premium, private endpoint, admin disabled, AcrPull for AKS</td>
+            <td>Application and migration images</td>
+          </tr>
+          <tr>
+            <td>PostgreSQL Flexible Server</td>
+            <td>Delegated subnet, private DNS, no public access, pgcrypto allow-list</td>
+            <td>Identity, inventory, audit, relationship and worker data</td>
+          </tr>
+          <tr>
+            <td>Storage Account</td>
+            <td>Private blob endpoint, versioning, soft delete, no public blobs</td>
+            <td>Login events and audit exports</td>
+          </tr>
+        </table>
+      </div>
+      <footer class="footer"><span>06 / 10</span><div class="progress"><div class="bar"></div></div></footer>
+    </section>
+
+    <section class="slide">
+      <header>
+        <div class="eyebrow">AKS workload model</div>
+        <h2>Microservices run with isolated identities and predictable rollout steps</h2>
+      </header>
+      <div class="content two-col">
+        <div class="panel">
+          <h3>Runtime shape</h3>
+          <ul>
+            <li>Web and API services are deployed as Kubernetes Deployments.</li>
+            <li>Inventory worker and outbox relay run separately in the workers namespace.</li>
+            <li>Database migrations run as a Kubernetes Job before application rollout.</li>
+            <li>Gateway service is an internal load balancer at the App Gateway backend.</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h3>Operational checks</h3>
+          <ul>
+            <li><span class="status">Healthy:</span> App Gateway backend health probe returns 200.</li>
+            <li><span class="status">Healthy:</span> Identity live and ready checks pass.</li>
+            <li><span class="status">Healthy:</span> Pods pull images from private ACR.</li>
+            <li><span class="warn">Watch:</span> HTTPS custom domain depends on DNS validation.</li>
+          </ul>
+        </div>
+      </div>
+      <footer class="footer"><span>07 / 10</span><div class="progress"><div class="bar"></div></div></footer>
+    </section>
+
+    <section class="slide">
+      <header>
+        <div class="eyebrow">Terraform structure</div>
+        <h2>Environment folders instead of CLI workspaces</h2>
+      </header>
+      <div class="content two-col">
+        <div class="code">terraform/
+  bootstrap/
+    dev/
+    prod/
+  environments/
+    dev/
+    prod/
+  modules/
+    network/
+    monitoring/
+    data-platform/
+    aks/
+    application-gateway/
+    front-door/
+    workload-federation/</div>
+        <div class="panel">
+          <h3>Why folder-based roots?</h3>
+          <ul>
+            <li>Dev and prod use different subscriptions and backends.</li>
+            <li>Production has Front Door; development does not.</li>
+            <li>RBAC, state, region, scale, and lifecycle rules are visibly different.</li>
+            <li>It is harder to accidentally deploy prod using a dev workspace selection.</li>
+          </ul>
+        </div>
+      </div>
+      <footer class="footer"><span>08 / 10</span><div class="progress"><div class="bar"></div></div></footer>
+    </section>
+
+    <section class="slide">
+      <header>
+        <div class="eyebrow">CI/CD and image flow</div>
+        <h2>From Git push to private ACR to AKS</h2>
+      </header>
+      <div class="content">
+        <div class="flow">
+          <div class="node"><strong>GitHub Push</strong><span>Branch and path filters trigger infra or app workflow</span></div>
+          <div class="node"><strong>OIDC Login</strong><span>No Azure client secret stored in GitHub</span></div>
+          <div class="node"><strong>Terraform Plan</strong><span>Remote state, policy checks, reviewable output</span></div>
+          <div class="node"><strong>ACR Build</strong><span>Images built or imported into private registry</span></div>
+          <div class="node"><strong>AKS Deploy</strong><span>Migration job, rollout, health checks</span></div>
+        </div>
+      </div>
+      <footer class="footer"><span>09 / 10</span><div class="progress"><div class="bar"></div></div></footer>
+    </section>
+
+    <section class="slide">
+      <header>
+        <div class="eyebrow">Close</div>
+        <h2>What this gives the project</h2>
+      </header>
+      <div class="content two-col">
+        <div class="panel">
+          <h3>Production value</h3>
+          <ul>
+            <li>A real cloud edge with WAF and managed TLS.</li>
+            <li>Private platform services and least-privilege workload access.</li>
+            <li>Repeatable environment creation through Terraform.</li>
+            <li>Clear separation between dev and prod subscriptions.</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h3>Next hardening steps</h3>
+          <ul>
+            <li>Complete Front Door custom domain validation.</li>
+            <li>Use immutable image digests for production deployments.</li>
+            <li>Automate ACR builds through GitHub OIDC and ACR Tasks.</li>
+            <li>Run backup restore tests and document operational runbooks.</li>
+          </ul>
+        </div>
+      </div>
+      <footer class="footer"><span>10 / 10</span><div class="progress"><div class="bar"></div></div></footer>
+    </section>
+  </main>
+
+  <div class="controls" aria-label="Slide controls">
+    <button type="button" id="prev">Back</button>
+    <button type="button" id="next">Next</button>
+  </div>
+
+  <script>
+    const slides = Array.from(document.querySelectorAll(".slide"));
+    const bars = Array.from(document.querySelectorAll(".bar"));
+    let index = 0;
+
+    function show(nextIndex) {
+      index = Math.max(0, Math.min(slides.length - 1, nextIndex));
+      slides.forEach((slide, position) => {
+        slide.classList.toggle("active", position === index);
+      });
+      bars.forEach((bar, position) => {
+        bar.style.width = position === index ? `${((index + 1) / slides.length) * 100}%` : "0";
+      });
+      document.title = `Sentinel Azure Infrastructure - ${index + 1}/${slides.length}`;
+    }
+
+    document.getElementById("prev").addEventListener("click", () => show(index - 1));
+    document.getElementById("next").addEventListener("click", () => show(index + 1));
+
+    window.addEventListener("keydown", (event) => {
+      if (["ArrowRight", "PageDown", " "].includes(event.key)) show(index + 1);
+      if (["ArrowLeft", "PageUp", "Backspace"].includes(event.key)) show(index - 1);
+      if (event.key === "Home") show(0);
+      if (event.key === "End") show(slides.length - 1);
+    });
+
+    show(0);
+  </script>
+</body>
+</html>

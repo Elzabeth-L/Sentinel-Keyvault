@@ -29,6 +29,8 @@ container in Docker Compose is only the local development equivalent.
 - [Security architecture](docs/architecture/security.md)
 - [Deployment architecture](docs/architecture/deployment.md)
 - [Azure production deployment guide](docs/deployment/azure-production-deployment-guide.md)
+- [Terraform Azure deployment](terraform/README.md)
+- [Terraform implementation plan](terraform/IMPLEMENTATION_PLAN.md)
 - [Roadmap](docs/roadmap.md)
 - [Session continuity](your-brain.md)
 

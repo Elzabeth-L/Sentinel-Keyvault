@@ -1,0 +1,5 @@
+resource_group_name  = "DEV-RG-1-TFSTATE"
+storage_account_name = "devrg1tfstateabc123"
+container_name       = "tfstate"
+key                  = "sentinel-dev.tfstate"
+use_azuread_auth      = true

@@ -37,7 +37,7 @@ spec:
             matchLabels: {app.kubernetes.io/name: operations-service}
       containers:
         - name: operations-service
-          image: elzabeth03/sentinel-operations-service:v1.0.0
+          image: rg1acra8270b.azurecr.io/sentinel-operations-service:v1.0.0
           imagePullPolicy: IfNotPresent
           ports: [{name: http, containerPort: 8000}]
           envFrom:

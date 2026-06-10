@@ -3,8 +3,6 @@ name: Backend
 on:
   push:
     paths: ["apps/**", "packages/python/**", "database/**", "tests/**", "pyproject.toml"]
-  pull_request:
-    paths: ["apps/**", "packages/python/**", "database/**", "tests/**", "pyproject.toml"]
 
 permissions:
   contents: read

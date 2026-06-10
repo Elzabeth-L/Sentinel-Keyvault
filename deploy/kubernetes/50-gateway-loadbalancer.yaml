@@ -20,17 +20,7 @@ data:
 
       server {
         listen 8080;
-        return 308 https://$host$request_uri;
-      }
-
-      server {
-        listen 8443 ssl;
         client_max_body_size 2m;
-
-        ssl_certificate /etc/nginx/tls/tls.crt;
-        ssl_certificate_key /etc/nginx/tls/tls.key;
-        ssl_protocols TLSv1.2 TLSv1.3;
-        ssl_prefer_server_ciphers off;
 
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -86,15 +76,10 @@ spec:
           ports:
             - name: http
               containerPort: 8080
-            - name: https
-              containerPort: 8443
           volumeMounts:
             - name: nginx-config
               mountPath: /etc/nginx/nginx.conf
               subPath: nginx.conf
-              readOnly: true
-            - name: tls
-              mountPath: /etc/nginx/tls
               readOnly: true
             - name: cache
               mountPath: /var/cache/nginx
@@ -118,9 +103,6 @@ spec:
         - name: nginx-config
           configMap:
             name: sentinel-gateway-nginx
-        - name: tls
-          secret:
-            secretName: sentinel-gateway-tls
         - name: cache
           emptyDir: {}
         - name: run
@@ -136,14 +118,15 @@ metadata:
   labels:
     app.kubernetes.io/name: sentinel-gateway
     app.kubernetes.io/part-of: sentinel
+  annotations:
+    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+    service.beta.kubernetes.io/azure-load-balancer-ipv4: "10.10.8.10"
 spec:
   type: LoadBalancer
+  loadBalancerIP: 10.10.8.10
   selector:
     app.kubernetes.io/name: sentinel-gateway
   ports:
     - name: http
       port: 80
       targetPort: http
-    - name: https
-      port: 443
-      targetPort: https

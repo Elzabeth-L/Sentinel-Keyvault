@@ -23,7 +23,7 @@ spec:
         seccompProfile: {type: RuntimeDefault}
       containers:
         - name: inventory-worker
-          image: elzabeth03/sentinel-inventory-service:v1.0.5
+          image: rg1acra8270b.azurecr.io/sentinel-inventory-service:v1.0.5
           imagePullPolicy: IfNotPresent
           command: ["python", "-m", "sentinel_inventory.worker"]
           envFrom:
@@ -85,7 +85,7 @@ spec:
             matchLabels: {app.kubernetes.io/name: outbox-relay}
       containers:
         - name: outbox-relay
-          image: elzabeth03/sentinel-audit-service:v1.0.0
+          image: rg1acra8270b.azurecr.io/sentinel-audit-service:v1.0.0
           imagePullPolicy: IfNotPresent
           command: ["python", "-m", "sentinel_common.outbox_worker"]
           envFrom:

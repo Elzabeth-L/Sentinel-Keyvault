@@ -45,7 +45,7 @@ spec:
               app.kubernetes.io/name: identity-service
       containers:
         - name: identity-service
-          image: elzabeth03/sentinel-identity-service:v1.0.3
+          image: rg1acra8270b.azurecr.io/sentinel-identity-service:v1.0.3
           imagePullPolicy: IfNotPresent
           ports:
             - name: http

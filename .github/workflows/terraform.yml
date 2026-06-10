@@ -1,0 +1,87 @@
+name: Terraform Deploy
+
+on:
+  push:
+    branches: ["dev", "master"]
+    paths:
+      - "terraform/**"
+      - ".github/workflows/terraform.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: terraform-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: ${{ github.ref_name == 'master' && 'Production' || 'Development' }}
+    runs-on: ${{ vars.AZURE_RUNNER_LABEL }}
+    environment: ${{ github.ref_name == 'master' && 'sentinel-prod' || 'sentinel-dev' }}
+    defaults:
+      run:
+        working-directory: terraform/environments/${{ github.ref_name == 'master' && 'prod' || 'dev' }}
+    env:
+      ARM_USE_OIDC: "true"
+      ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+      TF_IN_AUTOMATION: "true"
+      TF_INPUT: "false"
+      TF_VAR_name_suffix: ${{ vars.NAME_SUFFIX }}
+      TF_VAR_owner: ${{ vars.RESOURCE_OWNER }}
+      TF_VAR_cost_center: ${{ vars.COST_CENTER }}
+      TF_VAR_operator_and_ci_cidrs: ${{ vars.OPERATOR_AND_CI_CIDRS }}
+      TF_VAR_alert_email: ${{ vars.ALERT_EMAIL }}
+      TF_VAR_postgres_admin_password: ${{ secrets.POSTGRES_BOOTSTRAP_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login with OIDC
+        uses: azure/login@v2
+        with:
+          tenant-id: ${{ env.ARM_TENANT_ID }}
+          subscription-id: ${{ env.ARM_SUBSCRIPTION_ID }}
+          client-id: ${{ env.ARM_CLIENT_ID }}
+
+      - name: Verify subscription boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected_dev="6b01db76-626a-44a2-8119-17682410914a"
+          expected_prod="a8270be7-dabc-4d92-98db-26a55025b0df"
+          expected="$expected_dev"
+          [[ "$GITHUB_REF_NAME" == "master" ]] && expected="$expected_prod"
+          actual="$(az account show --query id -o tsv)"
+          test "$actual" = "$expected"
+          test "$ARM_SUBSCRIPTION_ID" = "$expected"
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.12.2"
+
+      - name: Terraform init
+        shell: bash
+        run: |
+          terraform init \
+            -backend-config="resource_group_name=${{ vars.TFSTATE_RESOURCE_GROUP }}" \
+            -backend-config="storage_account_name=${{ vars.TFSTATE_STORAGE_ACCOUNT }}" \
+            -backend-config="container_name=tfstate" \
+            -backend-config="key=${{ github.ref_name == 'master' && 'sentinel-prod.tfstate' || 'sentinel-dev.tfstate' }}" \
+            -backend-config="use_azuread_auth=true" \
+            -backend-config="use_oidc=true"
+
+      - name: Terraform format
+        run: terraform fmt -check -recursive ../../
+
+      - name: Terraform validate
+        run: terraform validate
+
+      - name: Terraform plan
+        run: terraform plan -out=tfplan
+
+      - name: Terraform apply
+        run: terraform apply -auto-approve tfplan

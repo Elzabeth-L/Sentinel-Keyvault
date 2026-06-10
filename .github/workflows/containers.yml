@@ -1,18 +1,31 @@
-name: Containers
+name: Build Images In ACR
 
 on:
   push:
-    branches: ["main"]
-  pull_request:
+    branches: ["dev", "master"]
+    paths:
+      - "apps/**"
+      - "packages/python/**"
+      - "database/**"
+      - "pyproject.toml"
+      - ".github/workflows/containers.yml"
+  workflow_dispatch:
 
 permissions:
   contents: read
-  packages: write
+  id-token: write
+
+concurrency:
+  group: containers-${{ github.ref_name }}
+  cancel-in-progress: false
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    name: Build ${{ matrix.image }}
+    runs-on: ${{ vars.AZURE_RUNNER_LABEL }}
+    environment: ${{ github.ref_name == 'master' && 'sentinel-prod' || 'sentinel-dev' }}
     strategy:
+      fail-fast: false
       matrix:
         include:
           - service: web
@@ -31,16 +44,64 @@ jobs:
             image: sentinel-audit-service
           - service: migration
             image: sentinel-migration
+    env:
+      AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+      ACR_NAME: ${{ vars.ACR_NAME }}
+      PUBLIC_HOST_NAME: ${{ github.ref_name == 'master' && 'sentinel.vaultrix.in' || 'dev.sentinel.vaultrix.in' }}
     steps:
       - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/build-push-action@v6
+
+      - name: Azure login with OIDC
+        uses: azure/login@v2
         with:
-          context: .
-          file: apps/${{ matrix.service }}/Dockerfile
-          push: false
-          tags: local/${{ matrix.image }}:${{ github.sha }}
-          build-args: |
-            NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1/api/v1
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+          client-id: ${{ env.AZURE_CLIENT_ID }}
+
+      - name: Verify subscription boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual="$(az account show --query id -o tsv)"
+          test "$actual" = "$AZURE_SUBSCRIPTION_ID"
+
+      - name: Check registry readiness
+        id: registry
+        shell: bash
+        run: |
+          if az acr show --name "$ACR_NAME" --query id -o tsv >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "ACR does not exist yet. Run the Terraform workflow first." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Build image inside Azure Container Registry
+        if: steps.registry.outputs.exists == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=()
+          if [[ "${{ matrix.service }}" == "web" ]]; then
+            args+=(--build-arg "NEXT_PUBLIC_API_BASE_URL=https://${PUBLIC_HOST_NAME}/api/v1")
+          fi
+
+          az acr build \
+            --registry "$ACR_NAME" \
+            --image "${{ matrix.image }}:${GITHUB_SHA}" \
+            --file "apps/${{ matrix.service }}/Dockerfile" \
+            "${args[@]}" \
+            .
+
+      - name: Resolve immutable digest
+        if: steps.registry.outputs.exists == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          digest="$(az acr repository show \
+            --name "$ACR_NAME" \
+            --image "${{ matrix.image }}:${GITHUB_SHA}" \
+            --query digest -o tsv)"
+          echo "${{ matrix.image }}@${digest}" >> "$GITHUB_STEP_SUMMARY"
